@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team · VOOM Sales</title>
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .head { display: flex; align-items: flex-end; gap: var(--s4); flex-wrap: wrap; }
+  .head h1 { font-size: 22px; }
+  .head .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .head .tools { margin-inline-start: auto; display: flex; gap: var(--s2); flex-wrap: wrap; }
+
+  .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s4); }
+  .sum { padding: var(--s3) var(--s4); display: flex; align-items: center; gap: var(--s3); }
+  .sum .s-ico { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand-ink); flex-shrink: 0; }
+  .sum .s-l { font-size: 12.5px; color: var(--muted); }
+  .sum .s-v { font-size: 20px; font-weight: 600; line-height: 1.2; }
+  .seats { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 6px; width: 120px; }
+  .seats i { display: block; height: 100%; background: var(--brand); }
+
+  .grid-a { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: var(--s4); align-items: start; }
+  .side { display: flex; flex-direction: column; gap: var(--s4); }
+
+  .table td.act { width: 48px; }
+  .online { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 2px var(--surface); position: absolute; bottom: -1px; inset-inline-end: -1px; }
+  .av-wrap { position: relative; display: inline-flex; }
+  .load { display: flex; align-items: center; gap: 8px; }
+  .load .m-track { width: 70px; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .load .m-fill { height: 100%; border-radius: 999px; background: var(--brand); }
+  .load .m-fill.hi { background: var(--warn); }
+  .you { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; margin-inline-start: 6px; }
+  .role-sel { width: auto; height: 32px; min-width: 130px; }
+  .projs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .projs .badge { height: 22px; font-size: 11.5px; }
+
+  .menu-wrap { position: relative; }
+  .menu { position: absolute; inset-inline-end: 0; top: calc(100% + 4px); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow-2); min-width: 200px; padding: 4px; z-index: 20; display: none; }
+  .menu.open { display: block; }
+  .menu button { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: transparent; padding: 8px 10px; border-radius: var(--r-sm); text-align: start; font-size: 13.5px; min-height: 40px; }
+  .menu button:hover, .menu button:focus-visible { background: var(--surface-2); }
+  .menu button.danger { color: var(--danger); }
+  .menu hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
+
+  .inv { display: flex; align-items: center; gap: var(--s3); padding: 12px var(--s5); border-bottom: 1px solid var(--border); }
+  .inv:last-child { border-bottom: 0; }
+  .inv .i-ico { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); flex-shrink: 0; }
+  .inv .i-m { font-size: 12px; color: var(--muted); }
+  .inv .i-acts { margin-inline-start: auto; display: flex; gap: 2px; }
+  .inv .i-acts .btn { width: 36px; padding: 0; }
+
+  .route { display: flex; flex-direction: column; gap: var(--s3); }
+  .avail { display: flex; align-items: center; gap: var(--s3); padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .avail:last-child { border-bottom: 0; }
+  .avail .a-m { font-size: 12px; color: var(--muted); }
+  .avail .switch { margin-inline-start: auto; }
+
+  .perm { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .perm th, .perm td { padding: 9px var(--s5); border-bottom: 1px solid var(--border); text-align: start; }
+  .perm th { font-size: 12px; color: var(--muted); font-weight: 500; background: var(--surface-2); }
+  .perm td.c, .perm th.c { text-align: center; width: 110px; }
+  .perm tr:last-child td { border-bottom: 0; }
+  .perm .yes { color: var(--ok); } .perm .no { color: var(--muted); opacity: .6; }
+  .perm .grp td { background: var(--surface-2); font-size: 11.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding-block: 6px; }
+  [lang="ar"] .perm .grp td { text-transform: none; letter-spacing: 0; font-size: 12.5px; }
+
+  /* drawer */
+  .dh-name { font-size: 17px; font-weight: 600; }
+  .sec-t { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin-bottom: var(--s2); }
+  [lang="ar"] .sec-t { text-transform: none; letter-spacing: 0; font-size: 13px; }
+  .req { color: var(--danger); margin-inline-start: 2px; }
+  .roles { display: grid; gap: var(--s2); }
+  .role-card { display: flex; gap: var(--s3); padding: var(--s3) var(--s4); border: 1px solid var(--border); border-radius: var(--r); cursor: pointer; align-items: flex-start; }
+  .role-card:has(input:checked) { border-color: var(--brand); box-shadow: var(--ring); background: var(--brand-soft); }
+  .role-card input { margin-top: 3px; accent-color: var(--brand); width: 18px; height: 18px; }
+  .role-card .r-d { font-size: 12.5px; color: var(--muted); }
+  .chk-grid { display: flex; gap: var(--s2); flex-wrap: wrap; }
+  .chk-grid label { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border: 1px solid var(--border); border-radius: 999px; font-size: 13px; cursor: pointer; }
+  .chk-grid label:has(input:checked) { background: var(--brand-soft); border-color: color-mix(in srgb, var(--brand) 40%, transparent); color: var(--brand-ink); }
+  .chk-grid input { accent-color: var(--brand); }
+  .err { font-size: 12px; color: var(--danger); display: none; align-items: center; gap: 4px; }
+  .field.invalid .input, .field.invalid .textarea { border-color: var(--danger); }
+  .field.invalid .err { display: flex; }
+
+  @media (max-width: 1320px) { .col-proj { display: none; } }
+  @media (max-width: 1080px) { .grid-a { grid-template-columns: minmax(0, 1fr); } .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 720px) { .col-load, .col-last { display: none; } .perm td.c, .perm th.c { width: 70px; padding-inline: 6px; } .perm th, .perm td { padding-inline: var(--s3); } }
+  @media (max-width: 520px) { .summary { grid-template-columns: minmax(0, 1fr); } .col-role { display: none; } }
+</style>
+</head>
+<body data-title="nav_team" data-crumb="nav_config">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main class="content" id="content">
+
+      <section class="head">
+        <div><h1 data-i18n="nav_team"></h1><p class="sub" data-i18n="h_sub"></p></div>
+        <div class="tools"><button class="btn primary" type="button" id="inviteBtn" data-api="POST /tenants/{tid}/invites/ {email}"><i data-lucide="user-plus"></i><span data-i18n="invite"></span></button></div>
+      </section>
+
+      <div class="api-legend row wrap" style="font-size:12px">
+        <span class="badge info"><i data-lucide="plug"></i><span data-i18n="api_legend_ok"></span></span>
+        <span class="badge warn"><i data-lucide="triangle-alert"></i><span data-i18n="api_legend_gap"></span></span>
+      </div>
+
+      <section class="summary" id="summary"></section>
+
+      <section class="grid-a">
+        <div class="card" style="overflow:visible" data-api="GET /tenants/{tid}/users/ {name, email, status, permissions, last_login_at}">
+          <div class="card-h">
+            <div><h3 data-i18n="members"></h3><div class="sub" data-i18n="members_s"></div></div>
+            <div class="spacer"></div>
+            <div class="seg" role="group" id="segF" aria-label="Filter"></div>
+          </div>
+          <div class="table-wrap" style="overflow:visible"><table class="table" id="tbl"></table></div>
+        </div>
+
+        <div class="side">
+          <div class="card" data-api="GET /tenants/{tid}/invites/ · DELETE /tenants/{tid}/invites/{id}">
+            <div class="card-h"><div><h3 data-i18n="pending"></h3><div class="sub" data-i18n="pending_s"></div></div></div>
+            <div id="invites"></div>
+          </div>
+          <div class="card gap" data-api="NEW user.permissions.handoff {available, projects} + NEW routing setting">
+            <div class="card-h"><div><h3 data-i18n="route_t"></h3><div class="sub" data-i18n="route_s"></div></div></div>
+            <div class="card-b route" id="route"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card gap" data-api="user.permissions (free-form dict) · role not exposed on UserRead">
+        <div class="card-h"><div><h3 data-i18n="perm_t"></h3><div class="sub" data-i18n="perm_s"></div></div></div>
+        <div class="table-wrap"><table class="perm" id="perm"></table></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle"></aside>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+App.extend({
+  en: {
+    h_sub: 'People who take over from the AI, own deals and configure agents.', invite: 'Invite member',
+    s_members: 'Members', s_online: 'Online now', s_pending: 'Pending invites', s_seats: 'Seats used',
+    members: 'Members', members_s: 'Everyone with access to Al Ruba Developments',
+    f_all: 'All', f_admin: 'Admins', f_user: 'Sales advisors', f_off: 'Disabled',
+    th_member: 'Member', th_role: 'Role', th_status: 'Status', th_load: 'Open chats', th_proj: 'Projects', th_last: 'Last sign-in', actions: 'Actions for {n}',
+    r_admin: 'Admin', r_user: 'Sales advisor', r_admin_d: 'Configures agents, channels, team and billing. Sees every chat and deal.', r_user_d: 'Takes over chats, owns deals and contacts in their projects.',
+    u_active: 'Active', u_disabled: 'Disabled', u_pending: 'Invited', you: 'You', never: 'Never',
+    m_edit: 'Edit member', m_reset: 'Send password reset', m_disable: 'Disable access', m_enable: 'Re-enable access', m_remove: 'Remove from workspace',
+    pending: 'Pending invites', pending_s: 'Invite codes expire after 7 days', inv_by: 'Invited by {u} · {t}', resend: 'Resend', revoke: 'Revoke', copy_code: 'Copy invite link', no_inv: 'No pending invites',
+    route_t: 'Handoff routing', route_s: 'Who receives chats when the AI pauses', r_mode: 'Assign new handoffs', m_rr: 'Round-robin', m_proj: 'By project', m_manual: 'Manual',
+    avail_on: 'Available for handoffs', avail_n: '{n} open chats · {p}',
+    perm_t: 'Roles & permissions', perm_s: 'What each role can do. Stored in user.permissions until the backend exposes roles.',
+    g_conv: 'Conversations', g_sales: 'Sales', g_conf: 'Configuration',
+    p_reply: 'Reply and take over from AI', p_all_chats: 'See chats in all projects', p_deals: 'Move deals and mark won / lost', p_contacts_exp: 'Export contacts', p_agents: 'Edit AI agents & stages', p_channels: 'Connect channels', p_team: 'Invite and manage team', p_billing: 'Workspace settings & keys',
+    d_invite: 'Invite a team member', d_edit: 'Edit {n}', f_email: 'Work email', f_email_help: 'They get a sign-up link valid for 7 days.', f_name: 'Name', f_role: 'Role', f_projects: 'Project access', f_projects_help: 'Advisors only see chats and deals for these projects.', f_msg: 'Personal note (optional)',
+    err_email: 'Enter a work email like name@alruba.sa.', err_dup: '{e} is already a member.', send_inv: 'Send invite', inv_sent: 'Invite sent to {e}', saved: 'Member updated', removed: '{n} removed', disabled_t: '{n} can no longer sign in', enabled_t: '{n} can sign in again', revoked: 'Invite revoked', resent: 'Invite re-sent', reset_t: 'Reset link sent to {e}', copied: 'Invite link copied',
+    rm_confirm: 'Remove {n}? Their open chats return to the handoff queue.', all_p: 'All projects', seats_of: '{a} of {b}',
+  },
+  ar: {
+    h_sub: 'الأشخاص الذين يتدخلون بدل الذكاء الاصطناعي ويتابعون الصفقات ويهيئون الوكلاء.', invite: 'دعوة عضو',
+    s_members: 'الأعضاء', s_online: 'متصلون الآن', s_pending: 'دعوات معلّقة', s_seats: 'المقاعد المستخدمة',
+    members: 'الأعضاء', members_s: 'كل من لديه وصول إلى الربى للتطوير العقاري',
+    f_all: 'الكل', f_admin: 'المشرفون', f_user: 'مستشارو المبيعات', f_off: 'موقوفون',
+    th_member: 'العضو', th_role: 'الدور', th_status: 'الحالة', th_load: 'محادثات مفتوحة', th_proj: 'المشاريع', th_last: 'آخر دخول', actions: 'إجراءات {n}',
+    r_admin: 'مشرف', r_user: 'مستشار مبيعات', r_admin_d: 'يهيئ الوكلاء والقنوات والفريق والفوترة، ويرى كل المحادثات والصفقات.', r_user_d: 'يتدخل في المحادثات ويتابع الصفقات والعملاء في مشاريعه.',
+    u_active: 'نشط', u_disabled: 'موقوف', u_pending: 'مدعو', you: 'أنت', never: 'لم يدخل',
+    m_edit: 'تعديل العضو', m_reset: 'إرسال رابط إعادة كلمة المرور', m_disable: 'إيقاف الوصول', m_enable: 'إعادة تفعيل الوصول', m_remove: 'إزالة من مساحة العمل',
+    pending: 'دعوات معلّقة', pending_s: 'تنتهي رموز الدعوة بعد ٧ أيام', inv_by: 'دعاه {u} · {t}', resend: 'إعادة الإرسال', revoke: 'إلغاء', copy_code: 'نسخ رابط الدعوة', no_inv: 'لا توجد دعوات معلّقة',
+    route_t: 'توجيه التحويل لموظف', route_s: 'من يستلم المحادثة عندما يتوقف الذكاء الاصطناعي', r_mode: 'توزيع التحويلات الجديدة', m_rr: 'بالتناوب', m_proj: 'حسب المشروع', m_manual: 'يدوياً',
+    avail_on: 'متاح لاستلام التحويلات', avail_n: '{n} محادثات مفتوحة · {p}',
+    perm_t: 'الأدوار والصلاحيات', perm_s: 'ما يستطيع كل دور فعله. تُحفظ في user.permissions إلى أن يعرض الخادم الأدوار.',
+    g_conv: 'المحادثات', g_sales: 'المبيعات', g_conf: 'التهيئة',
+    p_reply: 'الرد والتدخل بدل الذكاء الاصطناعي', p_all_chats: 'رؤية محادثات كل المشاريع', p_deals: 'نقل الصفقات وتحديد البيع أو الخسارة', p_contacts_exp: 'تصدير العملاء', p_agents: 'تعديل الوكلاء والمراحل', p_channels: 'ربط القنوات', p_team: 'دعوة الفريق وإدارته', p_billing: 'إعدادات مساحة العمل والمفاتيح',
+    d_invite: 'دعوة عضو جديد', d_edit: 'تعديل {n}', f_email: 'البريد الوظيفي', f_email_help: 'يصله رابط تسجيل صالح لمدة ٧ أيام.', f_name: 'الاسم', f_role: 'الدور', f_projects: 'المشاريع المسموحة', f_projects_help: 'يرى المستشار محادثات وصفقات هذه المشاريع فقط.', f_msg: 'رسالة شخصية (اختياري)',
+    err_email: 'أدخل بريداً وظيفياً مثل name@alruba.sa.', err_dup: '{e} عضو بالفعل.', send_inv: 'إرسال الدعوة', inv_sent: 'أُرسلت الدعوة إلى {e}', saved: 'تم تحديث العضو', removed: 'تمت إزالة {n}', disabled_t: 'لم يعد بإمكان {n} الدخول', enabled_t: 'يمكن لـ{n} الدخول مجدداً', revoked: 'أُلغيت الدعوة', resent: 'أُعيد إرسال الدعوة', reset_t: 'أُرسل رابط الاستعادة إلى {e}', copied: 'تم نسخ رابط الدعوة',
+    rm_confirm: 'إزالة {n}؟ ستعود محادثاته المفتوحة إلى قائمة التحويل.', all_p: 'كل المشاريع', seats_of: '{a} من {b}',
+  },
+});
+
+const D = window.DATA;
+const N = (en, ar) => ({ en, ar });
+const PK = Object.keys(D.projects);
+let members = [
+  { id: 'u1', name: D.team[0].name, email: 'ahmed.saleh@alruba.sa', role: 'admin', status: 'active', online: true, last: 3, projects: PK, avail: true },
+  { id: 'u2', name: D.team[1].name, email: 'layla.nasser@alruba.sa', role: 'user', status: 'active', online: true, last: 40, projects: ['jawharat-al-ruba', 'flamant'], avail: true },
+  { id: 'u3', name: D.team[2].name, email: 'hassan.ali@alruba.sa', role: 'user', status: 'active', online: false, last: 1260, projects: ['stax', 'nile-view'], avail: true },
+  { id: 'u4', name: D.team[3].name, email: 'mona.fathy@alruba.sa', role: 'user', status: 'active', online: true, last: 12, projects: ['sadeel'], avail: false },
+  { id: 'u5', name: N('Saad Al-Qahtani', 'سعد القحطاني'), email: 'saad.q@alruba.sa', role: 'admin', status: 'active', online: false, last: 4300, projects: PK, avail: false },
+  { id: 'u6', name: N('Rania Mostafa', 'رانيا مصطفى'), email: 'rania.m@alruba.sa', role: 'user', status: 'disabled', online: false, last: 43000, projects: ['nile-view'], avail: false },
+];
+let invites = [
+  { id: 'i1', email: 'khaled.harbi@alruba.sa', role: 'user', by: 'u1', mins: 180 },
+  { id: 'i2', email: 'sales.stax@alruba.ae', role: 'user', by: 'u5', mins: 4320 },
+];
+const SEATS = 10;
+const st = { f: 'all', mode: 'proj', menu: null };
+const openChats = (uid) => D.chats.filter((c) => c.assigned === uid && c.status !== 'closed').length;
+const nm = (m) => App.L(m.name);
+
+function renderSummary() {
+  const used = members.filter((m) => m.status !== 'disabled').length + invites.length;
+  const s = [['users', 's_members', App.n(members.length)], ['circle-dot', 's_online', App.n(members.filter((m) => m.online).length)], ['mail', 's_pending', App.n(invites.length)]];
+  document.getElementById('summary').innerHTML = s.map(([i, k, v]) => `<div class="card sum"><span class="s-ico"><i data-lucide="${i}"></i></span><div><div class="s-l">${App.t(k)}</div><div class="s-v num">${v}</div></div></div>`).join('') +
+    `<div class="card sum gap" data-api="NEW tenant.plan seats"><span class="s-ico"><i data-lucide="armchair"></i></span><div><div class="s-l">${App.t('s_seats')}</div><div class="s-v num">${App.t('seats_of').replace('{a}', App.n(used)).replace('{b}', App.n(SEATS))}</div><div class="seats"><i style="width:${used / SEATS * 100}%"></i></div></div></div>`;
+}
+
+function statusBadge(s) {
+  return { active: `<span class="badge ok"><i data-lucide="circle-check"></i>${App.t('u_active')}</span>`, disabled: `<span class="badge outline"><i data-lucide="ban"></i>${App.t('u_disabled')}</span>`, pending: `<span class="badge info"><i data-lucide="mail"></i>${App.t('u_pending')}</span>` }[s];
+}
+
+function renderTable() {
+  document.getElementById('segF').innerHTML = ['all', 'admin', 'user', 'off'].map((f) => `<button type="button" data-f="${f}" aria-pressed="${st.f === f}">${App.t('f_' + f)}</button>`).join('');
+  document.querySelectorAll('#segF button').forEach((b) => b.onclick = () => { st.f = b.dataset.f; renderTable(); App.icons(); });
+  const list = members.filter((m) => st.f === 'all' || (st.f === 'off' ? m.status === 'disabled' : m.role === st.f && m.status !== 'disabled'));
+  document.getElementById('tbl').innerHTML = `<thead><tr><th>${App.t('th_member')}</th><th class="col-role">${App.t('th_role')}</th><th>${App.t('th_status')}</th><th class="col-load">${App.t('th_load')}</th><th class="col-proj">${App.t('th_proj')}</th><th class="end col-last">${App.t('th_last')}</th><th class="act"><span class="sr-only">…</span></th></tr></thead>
+    <tbody>${list.map((m) => { const n = openChats(m.id); const me = m.id === 'u1'; return `<tr>
+      <td><div class="who"><span class="av-wrap"><span class="avatar sm">${App.initials(nm(m))}</span>${m.online ? `<span class="online" title="Online"></span>` : ''}</span>
+        <div style="min-width:0"><div class="name">${App.esc(nm(m))}${me ? `<span class="you">${App.t('you')}</span>` : ''}</div><div class="meta ltr">${App.esc(m.email)}</div></div></div></td>
+      <td class="col-role"><select class="select role-sel" data-role="${m.id}" ${me || m.status === 'disabled' ? 'disabled' : ''} aria-label="${App.t('th_role')} · ${App.esc(nm(m))}"><option value="admin" ${m.role === 'admin' ? 'selected' : ''}>${App.t('r_admin')}</option><option value="user" ${m.role === 'user' ? 'selected' : ''}>${App.t('r_user')}</option></select></td>
+      <td>${statusBadge(m.status)}</td>
+      <td class="col-load"><div class="load"><div class="m-track"><div class="m-fill ${n >= 3 ? 'hi' : ''}" style="width:${Math.min(100, n / 4 * 100)}%"></div></div><span class="num">${App.n(n)}</span></div></td>
+      <td class="col-proj"><div class="projs">${m.projects.length === PK.length ? `<span class="badge brand">${App.t('all_p')}</span>` : m.projects.map((p) => `<span class="badge outline">${App.L(D.projects[p].name)}</span>`).join('')}</div></td>
+      <td class="end muted col-last" style="white-space:nowrap">${m.online ? `<span style="color:var(--ok)">● ${App.lang === 'ar' ? 'الآن' : 'Now'}</span>` : App.ago(m.last)}</td>
+      <td class="act"><div class="menu-wrap"><button class="icon-btn" type="button" data-menu="${m.id}" aria-haspopup="menu" aria-expanded="${st.menu === m.id}" aria-label="${App.t('actions').replace('{n}', App.esc(nm(m)))}"><i data-lucide="ellipsis-vertical"></i></button>
+        <div class="menu ${st.menu === m.id ? 'open' : ''}" role="menu">
+          <button role="menuitem" type="button" data-do="edit" data-id="${m.id}"><i data-lucide="pencil" class="ico-sm"></i>${App.t('m_edit')}</button>
+          <button role="menuitem" type="button" data-do="reset" data-id="${m.id}"><i data-lucide="key-round" class="ico-sm"></i>${App.t('m_reset')}</button>
+          ${me ? '' : `<button role="menuitem" type="button" data-do="toggle" data-id="${m.id}"><i data-lucide="${m.status === 'disabled' ? 'circle-check' : 'ban'}" class="ico-sm"></i>${App.t(m.status === 'disabled' ? 'm_enable' : 'm_disable')}</button>
+          <hr><button role="menuitem" type="button" class="danger" data-do="remove" data-id="${m.id}"><i data-lucide="trash-2" class="ico-sm"></i>${App.t('m_remove')}</button>`}
+        </div></div></td>
+    </tr>`; }).join('')}</tbody>`;
+
+  document.querySelectorAll('[data-role]').forEach((s) => s.onchange = () => { members.find((m) => m.id === s.dataset.role).role = s.value; App.toast(App.t('saved')); draw(); });
+  document.querySelectorAll('[data-menu]').forEach((b) => b.onclick = (e) => { e.stopPropagation(); st.menu = st.menu === b.dataset.menu ? null : b.dataset.menu; renderTable(); App.icons(); if (st.menu) document.querySelector('.menu.open button')?.focus(); });
+  document.querySelectorAll('[data-do]').forEach((b) => b.onclick = () => {
+    const m = members.find((x) => x.id === b.dataset.id); st.menu = null;
+    if (b.dataset.do === 'edit') { draw(); return openDrawer(m); }
+    if (b.dataset.do === 'reset') App.toast(App.t('reset_t').replace('{e}', m.email));
+    if (b.dataset.do === 'toggle') { m.status = m.status === 'disabled' ? 'active' : 'disabled'; m.online = false; App.toast(App.t(m.status === 'disabled' ? 'disabled_t' : 'enabled_t').replace('{n}', nm(m))); }
+    if (b.dataset.do === 'remove') { if (!confirm(App.t('rm_confirm').replace('{n}', nm(m)))) { draw(); return; } members = members.filter((x) => x !== m); App.toast(App.t('removed').replace('{n}', nm(m))); }
+    draw();
+  });
+}
+document.addEventListener('click', () => { if (st.menu) { st.menu = null; renderTable(); App.icons(); } });
+
+function renderInvites() {
+  const by = (id) => members.find((m) => m.id === id);
+  document.getElementById('invites').innerHTML = invites.length ? invites.map((i) => `<div class="inv">
+    <span class="i-ico"><i data-lucide="mail"></i></span>
+    <div style="min-width:0"><div class="ltr" style="font-weight:500;overflow:hidden;text-overflow:ellipsis">${App.esc(i.email)}</div>
+      <div class="i-m">${App.t(i.role === 'admin' ? 'r_admin' : 'r_user')} · ${App.t('inv_by').replace('{u}', by(i.by) ? App.L(by(i.by).name).split(' ')[0] : '—').replace('{t}', App.ago(i.mins))}</div></div>
+    <div class="i-acts">
+      <button class="btn sm ghost" type="button" data-copy="${i.id}" title="${App.t('copy_code')}" aria-label="${App.t('copy_code')}"><i data-lucide="link" class="ico-sm"></i></button>
+      <button class="btn sm ghost gap" type="button" data-resend="${i.id}" title="${App.t('resend')}" aria-label="${App.t('resend')}" data-api="NEW resend"><i data-lucide="send" class="ico-sm"></i></button>
+      <button class="btn sm ghost danger" type="button" data-revoke="${i.id}" title="${App.t('revoke')}" aria-label="${App.t('revoke')}"><i data-lucide="x" class="ico-sm"></i></button>
+    </div></div>`).join('') : `<div class="empty" style="padding:var(--s5)">${App.t('no_inv')}</div>`;
+  document.querySelectorAll('[data-copy]').forEach((b) => b.onclick = () => App.toast(App.t('copied')));
+  document.querySelectorAll('[data-resend]').forEach((b) => b.onclick = () => App.toast(App.t('resent')));
+  document.querySelectorAll('[data-revoke]').forEach((b) => b.onclick = () => { invites = invites.filter((i) => i.id !== b.dataset.revoke); App.toast(App.t('revoked')); draw(); });
+}
+
+function renderRoute() {
+  const act = members.filter((m) => m.status === 'active');
+  document.getElementById('route').innerHTML = `
+    <div class="field"><span style="font-size:12.5px;font-weight:500;color:var(--text-2)">${App.t('r_mode')}</span>
+      <div class="seg" role="group" id="modeSeg" style="align-self:flex-start">${['rr', 'proj', 'manual'].map((k) => `<button type="button" data-mode="${k}" aria-pressed="${st.mode === k}">${App.t('m_' + k)}</button>`).join('')}</div></div>
+    <div>${act.map((m) => `<div class="avail"><span class="av-wrap"><span class="avatar sm">${App.initials(nm(m))}</span>${m.online ? '<span class="online"></span>' : ''}</span>
+      <div style="min-width:0"><div style="font-weight:500">${App.esc(nm(m))}</div><div class="a-m">${App.t('avail_n').replace('{n}', App.n(openChats(m.id))).replace('{p}', m.projects.length === PK.length ? App.t('all_p') : m.projects.map((p) => App.L(D.projects[p].name)).join('، '))}</div></div>
+      <label class="switch"><input type="checkbox" data-avail="${m.id}" ${m.avail ? 'checked' : ''} aria-label="${App.t('avail_on')} · ${App.esc(nm(m))}"><span class="track"></span></label></div>`).join('')}</div>`;
+  document.querySelectorAll('[data-mode]').forEach((b) => b.onclick = () => { st.mode = b.dataset.mode; renderRoute(); App.icons(); });
+  document.querySelectorAll('[data-avail]').forEach((c) => c.onchange = () => { members.find((m) => m.id === c.dataset.avail).avail = c.checked; App.toast(App.t('saved')); });
+}
+
+function renderPerm() {
+  const rows = [['g_conv'], ['p_reply', 1, 1], ['p_all_chats', 1, 0], ['g_sales'], ['p_deals', 1, 1], ['p_contacts_exp', 1, 0], ['g_conf'], ['p_agents', 1, 0], ['p_channels', 1, 0], ['p_team', 1, 0], ['p_billing', 1, 0]];
+  const ic = (v) => v ? `<i class="yes" data-lucide="check"></i><span class="sr-only">✓</span>` : `<i class="no" data-lucide="minus"></i><span class="sr-only">—</span>`;
+  document.getElementById('perm').innerHTML = `<thead><tr><th></th><th class="c">${App.t('r_admin')}</th><th class="c">${App.t('r_user')}</th></tr></thead><tbody>
+    ${rows.map((r) => r.length === 1 ? `<tr class="grp"><td colspan="3">${App.t(r[0])}</td></tr>` : `<tr><td>${App.t(r[0])}</td><td class="c">${ic(r[1])}</td><td class="c">${ic(r[2])}</td></tr>`).join('')}</tbody>`;
+}
+
+function openDrawer(m) {
+  const isNew = !m; const d = m || { name: N('', ''), email: '', role: 'user', projects: [PK[0]] };
+  const dr = document.getElementById('drawer');
+  dr.innerHTML = `
+    <div class="drawer-h">${isNew ? '<span class="avatar"><i data-lucide="user-plus" class="ico-sm"></i></span>' : `<span class="avatar">${App.initials(nm(d))}</span>`}
+      <div class="grow"><div class="dh-name" id="dTitle">${isNew ? App.t('d_invite') : App.t('d_edit').replace('{n}', App.esc(nm(d)))}</div></div>
+      <button class="icon-btn" type="button" id="dClose" aria-label="${App.t('close')}"><i data-lucide="x"></i></button></div>
+    <div class="drawer-b">
+      <div class="field" id="w-fEmail"><label for="fEmail">${App.t('f_email')}<span class="req" aria-hidden="true">*</span></label>
+        <input class="input ltr" id="fEmail" type="email" autocomplete="email" value="${App.esc(d.email)}" ${isNew ? '' : 'readonly'} required aria-required="true" aria-describedby="h-fEmail e-fEmail">
+        <span class="help" id="h-fEmail">${App.t('f_email_help')}</span><span class="err" id="e-fEmail" role="alert"><i data-lucide="circle-alert" class="ico-sm"></i><span></span></span></div>
+      ${isNew ? '' : `<div class="field"><label for="fName">${App.t('f_name')}</label><input class="input" id="fName" autocomplete="name" value="${App.esc(nm(d))}"></div>`}
+      <fieldset class="field" style="border:0;padding:0;margin:0"><legend style="font-size:12.5px;font-weight:500;color:var(--text-2);margin-bottom:6px">${App.t('f_role')}</legend>
+        <div class="roles">${['user', 'admin'].map((r) => `<label class="role-card"><input type="radio" name="role" value="${r}" ${d.role === r ? 'checked' : ''}><span><b>${App.t('r_' + r)}</b><div class="r-d">${App.t('r_' + r + '_d')}</div></span></label>`).join('')}</div></fieldset>
+      <fieldset class="field gap" style="border:0;padding:0;margin:0" data-api="NEW user.permissions.projects[]"><legend style="font-size:12.5px;font-weight:500;color:var(--text-2);margin-bottom:6px">${App.t('f_projects')}</legend>
+        <div class="chk-grid">${PK.map((p) => `<label><input type="checkbox" name="proj" value="${p}" ${d.projects.includes(p) ? 'checked' : ''}>${App.L(D.projects[p].name)}</label>`).join('')}</div>
+        <span class="help">${App.t('f_projects_help')}</span></fieldset>
+      ${isNew ? `<div class="field"><label for="fMsg">${App.t('f_msg')}</label><textarea class="textarea" id="fMsg" rows="3"></textarea></div>` : ''}
+    </div>
+    <div class="drawer-f"><button class="btn" type="button" id="dCancel">${App.t('cancel')}</button>
+      <button class="btn primary" type="button" id="dSave"><i data-lucide="${isNew ? 'send' : 'check'}"></i>${isNew ? App.t('send_inv') : App.t('save')}</button></div>`;
+  document.getElementById('scrim').classList.add('open'); dr.classList.add('open'); App.icons();
+  document.getElementById(isNew ? 'fEmail' : 'dClose').focus();
+  const em = document.getElementById('fEmail');
+  const check = () => {
+    const v = em.value.trim(); let msg = '';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) msg = App.t('err_email');
+    else if (isNew && (members.some((x) => x.email === v) || invites.some((x) => x.email === v))) msg = App.t('err_dup').replace('{e}', v);
+    document.getElementById('w-fEmail').classList.toggle('invalid', !!msg); em.setAttribute('aria-invalid', !!msg);
+    document.querySelector('#e-fEmail span').textContent = msg; return !msg;
+  };
+  if (isNew) em.onblur = check;
+  document.getElementById('dClose').onclick = closeDrawer; document.getElementById('dCancel').onclick = closeDrawer;
+  document.getElementById('dSave').onclick = () => {
+    if (isNew && !check()) { em.focus(); return; }
+    const role = dr.querySelector('[name=role]:checked').value, projects = [...dr.querySelectorAll('[name=proj]:checked')].map((i) => i.value);
+    if (isNew) { invites.unshift({ id: 'i' + Date.now(), email: em.value.trim(), role, by: 'u1', mins: 0 }); App.toast(App.t('inv_sent').replace('{e}', em.value.trim())); }
+    else { const n = document.getElementById('fName').value.trim(); Object.assign(m, { role, projects, name: n === nm(m) ? m.name : N(n, n) }); App.toast(App.t('saved')); }
+    closeDrawer(); draw();
+  };
+}
+function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('scrim').classList.remove('open'); }
+document.getElementById('scrim').onclick = closeDrawer;
+document.addEventListener('app:escape', () => { if (st.menu) { st.menu = null; renderTable(); App.icons(); } else closeDrawer(); });
+document.getElementById('inviteBtn').onclick = () => openDrawer(null);
+
+function draw() { renderSummary(); renderTable(); renderInvites(); renderRoute(); renderPerm(); App.icons(); }
+App.onRender(draw);
+App.init('team');
+</script>
+</body>
+</html>

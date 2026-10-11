@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Agents · VOOM Sales</title>
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .content.studio { max-width: none; }
+  .studio-grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: var(--s5); align-items: start; }
+  .ag-list { display: flex; flex-direction: column; gap: var(--s2); position: sticky; top: calc(var(--top-h) + var(--s5)); }
+  .ag-list .l-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s1); }
+  .ag-list .l-h h2 { font-size: 15px; }
+  .ag { display: flex; flex-direction: column; gap: 8px; padding: var(--s3) var(--s4); border-radius: var(--r-lg); border: 1px solid var(--border); background: var(--surface); text-align: start; width: 100%; transition: border-color .15s, box-shadow .15s; }
+  .ag:hover { border-color: var(--border-strong); box-shadow: var(--shadow-1); }
+  .ag[aria-current="true"] { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  .ag .a-top { display: flex; align-items: center; gap: var(--s3); }
+  .ag-av { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; color: #fff; }
+  .ag-av.SMAIA { background: linear-gradient(135deg, #1f9d55, #0f766e); }
+  .ag-av.Voomi { background: linear-gradient(135deg, #c8962a, #8a5d06); }
+  .ag-av.Calling { background: linear-gradient(135deg, #2a78d6, #184f95); }
+  .ag-av.lg { width: 56px; height: 56px; border-radius: 16px; } .ag-av.lg svg { width: 26px; height: 26px; }
+  .ag .a-name { font-weight: 600; font-size: 14px; }
+  .ag .a-svc { font-size: 12px; color: var(--muted); }
+  .ag .a-foot { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .live-dot { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ok); font-weight: 500; margin-inline-start: auto; }
+  .live-dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px var(--ok-soft); }
+
+  .ag-head { display: flex; align-items: center; gap: var(--s4); padding: var(--s5); flex-wrap: wrap; }
+  .ag-head h1 { font-size: 20px; }
+  .ag-head .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .ag-head .acts { margin-inline-start: auto; display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap; }
+  .ag-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--border); }
+  .ag-stats > div { padding: var(--s3) var(--s5); border-inline-end: 1px solid var(--border); }
+  .ag-stats > div:last-child { border-inline-end: 0; }
+  .ag-stats .l { font-size: 12px; color: var(--muted); } .ag-stats .v { font-size: 18px; font-weight: 600; }
+  .tabbar { display: flex; gap: 2px; border-top: 1px solid var(--border); padding: 0 var(--s4); overflow-x: auto; scrollbar-width: none; }
+  .tabbar button { border: 0; background: transparent; height: 46px; padding: 0 12px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .tabbar button[aria-selected="true"] { color: var(--brand-ink); border-bottom-color: var(--brand); }
+
+  /* stage flow */
+  .flow-wrap { overflow-x: auto; padding: var(--s2) 2px var(--s3); }
+  .flow { display: flex; align-items: stretch; gap: 0; min-width: max-content; }
+  .stg { width: 200px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-lg); padding: var(--s3); text-align: start; display: flex; flex-direction: column; gap: 6px; transition: border-color .15s, box-shadow .15s; position: relative; }
+  .stg:hover { border-color: var(--border-strong); }
+  .stg[aria-pressed="true"] { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  .stg .n { width: 24px; height: 24px; border-radius: 50%; background: var(--brand-soft); color: var(--brand-ink); display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+  .stg[aria-pressed="true"] .n { background: var(--brand); color: var(--on-brand); }
+  .stg .t { font-weight: 600; font-size: 14px; }
+  .stg .d { font-size: 12px; color: var(--muted); line-height: 1.45; min-height: 34px; }
+  .stg .counts { display: flex; gap: 8px; font-size: 11.5px; color: var(--text-2); flex-wrap: wrap; }
+  .stg .counts span { display: inline-flex; align-items: center; gap: 3px; }
+  .stg .fu { font-size: 11.5px; color: var(--warn); display: flex; align-items: center; gap: 4px; }
+  .stg .fu.none { color: var(--muted); }
+  .stg .deals-n { position: absolute; top: 10px; inset-inline-end: 10px; font-size: 11.5px; color: var(--muted); }
+  .arrow { width: 36px; display: grid; place-items: center; color: var(--border-strong); flex-shrink: 0; }
+  .add-stg { width: 120px; border: 1.5px dashed var(--border-strong); border-radius: var(--r-lg); background: transparent; color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 13px; margin-inline-start: var(--s3); }
+  .add-stg:hover { color: var(--brand-ink); border-color: var(--brand); }
+
+  .editor { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: var(--s4); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
+  .form-grid .full { grid-column: 1 / -1; }
+  .fu-card { border: 1px solid color-mix(in srgb, var(--warn) 30%, var(--border)); background: var(--warn-soft); border-radius: var(--r-lg); padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
+  .fu-card h4 { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .fu-card .input, .fu-card .textarea { background: var(--surface); }
+  .stepper { display: inline-flex; align-items: center; border: 1px solid var(--border-strong); border-radius: var(--r-sm); background: var(--surface); height: 40px; }
+  .stepper button { width: 38px; height: 100%; border: 0; background: transparent; display: grid; place-items: center; color: var(--text-2); }
+  .stepper button:hover { background: var(--surface-2); }
+  .stepper output { min-width: 34px; text-align: center; font-weight: 600; }
+  .fu-timeline { display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--text-2); flex-wrap: wrap; }
+  .fu-timeline .pt { display: inline-flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; }
+  .fu-timeline .pt.end { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
+
+  .sub-card .card-h { padding: var(--s3) var(--s4); }
+  .sub-card .card-h h3 { font-size: 14px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .sub-card .card-h { flex-wrap: nowrap; }
+  .sub-card .card-h .sub { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sub-card .card-h .spacer { display: none; }
+  .li-row > span:nth-child(2) { white-space: nowrap; }
+  .li-row { display: flex; align-items: center; gap: var(--s3); padding: 10px var(--s4); border-bottom: 1px solid var(--border); font-size: 13px; }
+  .li-row:last-child { border-bottom: 0; }
+  .method { font: 600 11px/1 ui-monospace, Consolas, monospace; padding: 4px 6px; border-radius: 4px; background: var(--info-soft); color: var(--info); }
+  .method.POST { background: var(--ok-soft); color: var(--ok); }
+  .url { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--text-2); direction: ltr; unicode-bidi: isolate; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cond { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; background: var(--surface-2); border-radius: 4px; padding: 2px 6px; direction: ltr; unicode-bidi: isolate; }
+  .prio { font-size: 11px; color: var(--muted); margin-inline-start: auto; white-space: nowrap; }
+  .qa { border-bottom: 1px solid var(--border); }
+  .qa:last-child { border-bottom: 0; }
+  .qa summary { list-style: none; display: flex; align-items: center; gap: var(--s2); padding: 10px var(--s4); cursor: pointer; font-size: 13.5px; font-weight: 500; }
+  .qa summary::-webkit-details-marker { display: none; }
+  .qa summary .chev { margin-inline-start: auto; transition: transform .2s; color: var(--muted); }
+  .qa[open] summary .chev { transform: rotate(180deg); }
+  .qa p { padding: 0 var(--s4) var(--s3); color: var(--text-2); font-size: 13px; }
+
+  .prompt-box { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; min-height: 320px; line-height: 1.7; }
+  .var { color: var(--brand-ink); }
+  .opt-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: var(--s3); }
+  .opt { border: 1px solid var(--border); border-radius: var(--r); padding: var(--s3); display: flex; gap: var(--s3); align-items: flex-start; cursor: pointer; background: var(--surface); }
+  .opt:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+  .opt input { margin-top: 3px; accent-color: var(--brand); }
+  .opt .o-t { font-weight: 600; font-size: 13.5px; } .opt .o-s { font-size: 12px; color: var(--muted); }
+
+  .ch-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.3fr) auto; gap: var(--s4); align-items: center; padding: var(--s3) var(--s5); border-bottom: 1px solid var(--border); }
+  .ch-row:last-child { border-bottom: 0; }
+  .secret { display: flex; align-items: center; gap: 6px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--text-2); direction: ltr; }
+  .copy-field { display: flex; align-items: center; gap: var(--s2); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 0 4px 0 12px; height: 40px; }
+  .copy-field code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; direction: ltr; text-align: left; }
+
+  .test-fab { position: fixed; bottom: 24px; inset-inline-end: 24px; z-index: 20; box-shadow: var(--shadow-3); border-radius: 999px; height: 48px; padding: 0 20px; }
+
+  @media (max-width: 1280px) { .editor { grid-template-columns: minmax(0,1fr); } .opt-grid { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } }
+  @media (max-width: 1080px) { .studio-grid { grid-template-columns: minmax(0,1fr); } .ag-list { position: static; flex-direction: row; overflow-x: auto; } .ag-list .l-h { display: none; } .ag { min-width: 250px; } }
+  @media (max-width: 720px) { .ag-stats { grid-template-columns: repeat(2, minmax(0,1fr)); } .ag-stats > div:nth-child(2) { border-inline-end: 0; } .form-grid, .opt-grid { grid-template-columns: minmax(0,1fr); } .ch-row { grid-template-columns: minmax(0,1fr) auto; } .ch-row .hide-sm2 { display: none; } }
+</style>
+</head>
+<body data-title="nav_agents" data-crumb="nav_config">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main class="content studio">
+      <div class="studio-grid">
+        <nav class="ag-list" id="agList" aria-label="Agents" data-api="GET /tenants/{tid}/agents/"></nav>
+        <div class="stack" style="gap:var(--s4);min-width:0">
+          <section class="card" id="agHead"></section>
+          <section id="tabBody" class="stack" style="gap:var(--s4)"></section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<button class="btn primary test-fab" type="button" id="testBtn"><i data-lucide="flask-conical"></i><span data-i18n="test_agent"></span></button>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+App.extend({
+  en: {
+    agents_h: 'Agents', new_agent: 'New agent', test_agent: 'Test agent', live: 'Live', paused: 'Paused', pause: 'Pause agent',
+    svc_SMAIA: 'Messaging agent · SMAIA', svc_Voomi: '3D tour voice agent · Voomi', svc_Calling: 'Phone agent · LiveKit SIP',
+    st_convs: 'Conversations (30d)', st_leads: 'Leads captured', st_rate: 'Lead rate', st_hand: 'Human handoffs',
+    tab_pipeline: 'Pipeline stages', tab_persona: 'Persona & prompt', tab_channels: 'Channels', tab_knowledge: 'Knowledge', tab_settings: 'Integration',
+    flow_h: 'Conversation pipeline', flow_s: 'The AI moves each deal through these stages. Click a stage to edit it.', add_stage: 'Add stage',
+    deals_in: '{n} deals', kn: 'Q&A', ac: 'Actions', ru: 'Rules', fu_s: 'Follow-up every {h}h, max {m}', no_fu: 'No automatic follow-up',
+    stage_h: 'Stage settings', f_name: 'Stage name', f_desc: 'Description', f_instr: 'Instruction for the AI', f_instr_help: 'What the agent should achieve in this stage. Sent with every message while the deal is here.',
+    f_notes: 'Internal notes', fu_h: 'Follow-ups when the client goes quiet', fu_every: 'Nudge after', hours: 'hours', fu_max: 'Max attempts', fu_prompt: 'Follow-up instruction',
+    fu_then: 'Then: AI pauses, chat → High priority (human takeover)', fu_n: 'Nudge {n}', fu_help: 'The timer restarts whenever the client or the AI sends a message.',
+    rules_h: 'Transition rules', rules_s: 'When to move to another stage', actions_h: 'Actions', actions_s: 'HTTP calls the AI can trigger', know_h: 'Knowledge', know_s: 'Q&A the AI uses in this stage',
+    to: 'to', prio: 'priority {n}', add_rule: 'Add rule', add_action: 'Add action', add_qa: 'Add Q&A',
+    p_identity: 'Identity', p_provider: 'Provider', p_model: 'Model', p_lang: 'Primary language', p_persona: 'Persona', p_voice: 'Voice',
+    p_prompt: 'System prompt', p_prompt_help: 'Jinja variables are filled per project and channel. Keep instructions in the client’s dialect.',
+    persona_fahd: 'Fahad · فهد', persona_fahd_s: 'Male · Saudi, warm & respectful', persona_shahad: 'Shahad · شهد', persona_shahad_s: 'Female · Saudi, concise', persona_nour: 'Nour · نور', persona_nour_s: 'Female · Egyptian, friendly',
+    lang_ar_sa: 'Arabic — Saudi', lang_ar_eg: 'Arabic — Egyptian', lang_en: 'English', lang_auto: 'Follow the client',
+    ch_h: 'Connected channels', ch_s: 'Where this agent answers. Credentials are stored in the channel’s protocol_config.', entry: 'Entry stage', tokens: 'Tokens',
+    active: 'Active', disabled: 'Disabled', connect: 'Connect channel', reveal: 'Reveal', rotate: 'Rotate', copy: 'Copy', copied: 'Copied',
+    int_endpoint: 'AI service endpoint', int_endpoint_help: 'agent.settings.external_endpoint — overrides the platform default.',
+    int_webhook: 'Inbound webhook URL', int_webhook_help: 'Give this to your Message Service. Uses the tenant webhook key.',
+    int_key: 'Tenant webhook key', int_key_help: 'tenant.settings.webhook_api_key — without it every inbound message is rejected.',
+    int_health: 'Service health', ok: 'Healthy', down: 'Credentials failing',
+    unsaved: 'Changes saved', test_toast: 'Opening a sandbox chat with this agent…',
+  },
+  ar: {
+    agents_h: 'الوكلاء', new_agent: 'وكيل جديد', test_agent: 'جرّب الوكيل', live: 'يعمل', paused: 'متوقف', pause: 'إيقاف الوكيل',
+    svc_SMAIA: 'وكيل المراسلة · سمايا', svc_Voomi: 'وكيل صوتي للجولات · فومي', svc_Calling: 'وكيل الهاتف · LiveKit SIP',
+    st_convs: 'المحادثات (٣٠ يوماً)', st_leads: 'العملاء المسجّلون', st_rate: 'نسبة العملاء', st_hand: 'تحويل لموظف',
+    tab_pipeline: 'مراحل المسار', tab_persona: 'الشخصية والتعليمات', tab_channels: 'القنوات', tab_knowledge: 'المعرفة', tab_settings: 'التكامل',
+    flow_h: 'مسار المحادثة', flow_s: 'ينقل الذكاء الاصطناعي كل صفقة عبر هذه المراحل. اضغط على مرحلة لتعديلها.', add_stage: 'إضافة مرحلة',
+    deals_in: '{n} صفقة', kn: 'سؤال وجواب', ac: 'إجراءات', ru: 'قواعد', fu_s: 'متابعة كل {h} س، بحد أقصى {m}', no_fu: 'بلا متابعة تلقائية',
+    stage_h: 'إعدادات المرحلة', f_name: 'اسم المرحلة', f_desc: 'الوصف', f_instr: 'تعليمات للذكاء الاصطناعي', f_instr_help: 'ما يجب أن يحققه الوكيل في هذه المرحلة. تُرسل مع كل رسالة طالما الصفقة هنا.',
+    f_notes: 'ملاحظات داخلية', fu_h: 'المتابعة عند توقف العميل عن الرد', fu_every: 'متابعة بعد', hours: 'ساعة', fu_max: 'أقصى عدد محاولات', fu_prompt: 'تعليمات المتابعة',
+    fu_then: 'بعدها: يتوقف الذكاء الاصطناعي وتُرفع أولوية المحادثة (تحويل لموظف)', fu_n: 'متابعة {n}', fu_help: 'يُعاد ضبط المؤقت كلما أرسل العميل أو الذكاء الاصطناعي رسالة.',
+    rules_h: 'قواعد الانتقال', rules_s: 'متى ينتقل العميل لمرحلة أخرى', actions_h: 'الإجراءات', actions_s: 'طلبات HTTP يمكن للذكاء الاصطناعي تنفيذها', know_h: 'المعرفة', know_s: 'أسئلة وأجوبة يستخدمها الوكيل في هذه المرحلة',
+    to: 'إلى', prio: 'الأولوية {n}', add_rule: 'إضافة قاعدة', add_action: 'إضافة إجراء', add_qa: 'إضافة سؤال',
+    p_identity: 'الهوية', p_provider: 'المزوّد', p_model: 'النموذج', p_lang: 'اللغة الأساسية', p_persona: 'الشخصية', p_voice: 'الصوت',
+    p_prompt: 'تعليمات النظام', p_prompt_help: 'تُملأ متغيرات Jinja حسب المشروع والقناة. اكتب التعليمات بلهجة العميل.',
+    persona_fahd: 'فهد · Fahad', persona_fahd_s: 'ذكر · سعودي، ودود ومحترم', persona_shahad: 'شهد · Shahad', persona_shahad_s: 'أنثى · سعودية، مختصرة', persona_nour: 'نور · Nour', persona_nour_s: 'أنثى · مصرية، ودودة',
+    lang_ar_sa: 'العربية — سعودي', lang_ar_eg: 'العربية — مصري', lang_en: 'الإنجليزية', lang_auto: 'حسب لغة العميل',
+    ch_h: 'القنوات المتصلة', ch_s: 'أين يرد هذا الوكيل. تُحفظ بيانات الاعتماد في protocol_config للقناة.', entry: 'مرحلة البداية', tokens: 'المفاتيح',
+    active: 'مفعّلة', disabled: 'معطّلة', connect: 'ربط قناة', reveal: 'إظهار', rotate: 'تجديد', copy: 'نسخ', copied: 'تم النسخ',
+    int_endpoint: 'عنوان خدمة الذكاء الاصطناعي', int_endpoint_help: 'agent.settings.external_endpoint — يتجاوز الإعداد الافتراضي للمنصة.',
+    int_webhook: 'رابط الويبهوك الوارد', int_webhook_help: 'أعطه لخدمة المراسلة. يستخدم مفتاح الويبهوك الخاص بالمنشأة.',
+    int_key: 'مفتاح ويبهوك المنشأة', int_key_help: 'tenant.settings.webhook_api_key — بدونه تُرفض كل الرسائل الواردة.',
+    int_health: 'حالة الخدمة', ok: 'سليمة', down: 'فشل بيانات الاعتماد',
+    unsaved: 'تم حفظ التغييرات', test_toast: 'جارٍ فتح محادثة تجريبية مع هذا الوكيل…',
+  },
+});
+
+const D = window.DATA;
+const st = { agent: 'ag1', tab: 'pipeline', stage: 's3' };
+const icon = { SMAIA: 'message-square-text', Voomi: 'box', Calling: 'phone-call' };
+const agent = () => D.agents.find((a) => a.id === st.agent);
+const dealsPer = { s1: 3, s2: 4, s3: 7, s4: 4, s5: 2 };
+
+function renderList() {
+  document.getElementById('agList').innerHTML = `<div class="l-h"><h2>${App.t('agents_h')}</h2><button class="btn sm" type="button"><i data-lucide="plus" class="ico-sm"></i>${App.t('new_agent')}</button></div>` +
+    D.agents.map((a) => `<button class="ag" type="button" data-id="${a.id}" aria-current="${a.id === st.agent}">
+      <div class="a-top"><span class="ag-av ${a.service}"><i data-lucide="${icon[a.service]}"></i></span>
+        <div style="min-width:0"><div class="a-name">${App.L(a.name)}</div><div class="a-svc">${App.t('svc_' + a.service)}</div></div></div>
+      <div class="a-foot">${a.channels.slice(0, 5).map((c) => App.chBadge(c)).join('')}${a.channels.length > 5 ? `<span class="muted" style="font-size:12px">+${a.channels.length - 5}</span>` : ''}<span class="live-dot">${App.t('live')}</span></div>
+    </button>`).join('');
+  document.querySelectorAll('.ag[data-id]').forEach((b) => b.onclick = () => { st.agent = b.dataset.id; draw(); });
+}
+
+function renderHead() {
+  const a = agent(), p = D.projects[a.project];
+  const tabs = ['pipeline', 'persona', 'channels', 'knowledge', 'settings'];
+  const ti = { pipeline: 'route', persona: 'user-round-cog', channels: 'radio-tower', knowledge: 'book-open-text', settings: 'plug' };
+  document.getElementById('agHead').innerHTML = `
+    <div class="ag-head">
+      <span class="ag-av lg ${a.service}"><i data-lucide="${icon[a.service]}"></i></span>
+      <div style="min-width:0"><h1>${App.L(a.name)}</h1>
+        <div class="meta"><span class="badge ok"><i data-lucide="circle-check"></i>${App.t('live')}</span>
+          <span class="badge outline"><i data-lucide="cpu"></i><span class="ltr">${a.provider} · ${a.model}</span></span>
+          <span class="badge outline"><i data-lucide="languages"></i>${App.t(a.language === 'ar-EG' ? 'lang_ar_eg' : 'lang_ar_sa')} + ${App.t('lang_en')}</span>
+          <span class="badge brand"><i data-lucide="building-2"></i>${App.L(p.name)} · ${App.L(p.city)}</span></div></div>
+      <div class="acts" data-api="PATCH /agents/{id}">
+        <button class="btn" type="button"><i data-lucide="pause"></i>${App.t('pause')}</button>
+        <button class="btn primary" type="button" id="saveTop"><i data-lucide="save"></i>${App.t('save')}</button>
+      </div>
+    </div>
+    <div class="ag-stats gap" data-api="NEW GET /analytics/agents/{id}">
+      <div><div class="l">${App.t('st_convs')}</div><div class="v num">${App.n(a.convs)}</div></div>
+      <div><div class="l">${App.t('st_leads')}</div><div class="v num">${App.n(a.leads)}</div></div>
+      <div><div class="l">${App.t('st_rate')}</div><div class="v num">${App.pct(a.leads / a.convs)}</div></div>
+      <div><div class="l">${App.t('st_hand')}</div><div class="v num">${App.n(a.handoffs)}</div></div>
+    </div>
+    <div class="tabbar" role="tablist">${tabs.map((t) => `<button role="tab" type="button" data-tab="${t}" aria-selected="${st.tab === t}"><i data-lucide="${ti[t]}" class="ico-sm"></i>${App.t('tab_' + t)}</button>`).join('')}</div>`;
+  document.querySelectorAll('[data-tab]').forEach((b) => b.onclick = () => { st.tab = b.dataset.tab; draw(); });
+  document.getElementById('saveTop').onclick = () => App.toast(App.t('unsaved'));
+}
+
+/* ---------- tabs ---------- */
+function tabPipeline() {
+  const S = D.stages, cur = S.find((s) => s.id === st.stage);
+  const rules = {
+    s1: [['s2', '{"intent":"buy|invest"}', 0]],
+    s2: [['s3', '{"has":["budget","timeline"]}', 0], ['s5', '{"asks_human":true}', 10]],
+    s3: [['s4', '{"wants_visit":true}', 0], ['s5', '{"ready_to_reserve":true}', 10]],
+    s4: [['s5', '{"visit_booked":true}', 0]], s5: [],
+  }[cur.id];
+  const actions = {
+    s1: [], s2: [['POST', 'https://crm.alruba.sa/api/leads']],
+    s3: [['GET', 'https://realestate-api.voom.cc/api/v1/companies/{project}/units'], ['POST', 'https://api.alruba.sa/brochures/send']],
+    s4: [['POST', 'https://calendar.alruba.sa/api/visits']], s5: [['POST', 'https://crm.alruba.sa/api/handover']],
+  }[cur.id];
+  const qa = [
+    [{ en: 'Is the price inclusive of VAT and registration?', ar: 'هل السعر شامل الضريبة ورسوم التسجيل؟' }, { en: 'Prices exclude 5% real-estate transaction tax; the first-home buyer exemption applies up to SAR 1M.', ar: 'الأسعار لا تشمل ضريبة التصرفات العقارية ٥٪، ويُعفى المسكن الأول حتى مليون ريال.' }],
+    [{ en: 'Do you accept MOH (Sakani) subsidy?', ar: 'هل تقبلون دعم سكني؟' }, { en: 'Yes — Sadeel villas are listed on Sakani; models 1–4 qualify for the MOH price.', ar: 'نعم — فلل سديل مدرجة في سكني، والنماذج ١–٤ مؤهلة لسعر الدعم.' }],
+    [{ en: 'What is the handover date?', ar: 'متى موعد التسليم؟' }, { en: 'Phase 1 hands over Q2 2027; phase 2 in Q1 2028.', ar: 'تسليم المرحلة الأولى الربع الثاني ٢٠٢٧، والثانية الربع الأول ٢٠٢٨.' }],
+  ];
+  const fuPts = cur.fu.max ? Array.from({ length: cur.fu.max }, (_, i) => `<span class="pt"><i data-lucide="alarm-clock" class="ico-sm"></i>${App.t('fu_n').replace('{n}', App.n(i + 1))} · +${App.n(cur.fu.interval * (i + 1))}h</span><i class="flip-rtl ico-sm" data-lucide="chevron-right"></i>`).join('') : '';
+  return `
+    <div class="card" data-api="GET /stages/ (filter agent_id) · POST /stages/">
+      <div class="card-h"><div><h3>${App.t('flow_h')}</h3><div class="sub">${App.t('flow_s')}</div></div></div>
+      <div class="card-b"><div class="flow-wrap"><div class="flow">
+        ${S.map((s, i) => `${i ? `<span class="arrow"><i class="flip-rtl" data-lucide="arrow-right"></i></span>` : ''}
+          <button class="stg" type="button" data-stage="${s.id}" aria-pressed="${s.id === st.stage}">
+            <span class="deals-n num">${App.t('deals_in').replace('{n}', App.n(dealsPer[s.id]))}</span>
+            <span class="n">${App.n(i + 1)}</span><span class="t">${App.L(s.name)}</span><span class="d">${App.L(s.desc)}</span>
+            <span class="counts"><span><i data-lucide="book-open-text" class="ico-sm"></i>${App.n(s.knowledge)}</span><span><i data-lucide="zap" class="ico-sm"></i>${App.n(s.actions)}</span><span><i data-lucide="git-branch" class="ico-sm"></i>${App.n(s.rules)}</span></span>
+            <span class="fu ${s.fu.max ? '' : 'none'}"><i data-lucide="alarm-clock" class="ico-sm"></i>${s.fu.max ? App.t('fu_s').replace('{h}', App.n(s.fu.interval)).replace('{m}', App.n(s.fu.max)) : App.t('no_fu')}</span>
+          </button>`).join('')}
+        <button class="add-stg" type="button"><i data-lucide="plus"></i>${App.t('add_stage')}</button>
+      </div></div></div>
+    </div>
+
+    <div class="editor">
+      <div class="card" data-api="PATCH /stages/{id} {name, description, instruction, notes}">
+        <div class="card-h"><h3>${App.t('stage_h')} · ${App.L(cur.name)}</h3></div>
+        <div class="card-b"><div class="form-grid">
+          <div class="field"><label for="fName">${App.t('f_name')}</label><input class="input" id="fName" dir="auto" value="${App.esc(App.L(cur.name))}"></div>
+          <div class="field"><label for="fDesc">${App.t('f_desc')}</label><input class="input" id="fDesc" dir="auto" value="${App.esc(App.L(cur.desc))}"></div>
+          <div class="field full"><label for="fInstr">${App.t('f_instr')}</label><textarea class="textarea" id="fInstr" dir="auto" rows="4">${App.esc(App.L(cur.instruction))}</textarea><span class="help">${App.t('f_instr_help')}</span></div>
+          <div class="field full"><label for="fNotes">${App.t('f_notes')}</label><input class="input" id="fNotes" dir="auto" value=""></div>
+        </div></div>
+        <div class="card-b" style="padding-top:0">
+          <div class="fu-card" data-api="stage.follow_up_interval (hours) · follow_up_max_attempts · follow_up_prompt">
+            <h4><i data-lucide="alarm-clock"></i>${App.t('fu_h')}</h4>
+            <div class="row wrap" style="gap:var(--s4);align-items:flex-end">
+              <div class="field"><label for="fuI">${App.t('fu_every')}</label><div class="input-group" style="width:160px"><input class="input num" id="fuI" type="number" inputmode="numeric" min="0" value="${cur.fu.interval}"><span class="addon">${App.t('hours')}</span></div></div>
+              <div class="field"><label>${App.t('fu_max')}</label><div class="stepper"><button type="button" data-step="-1" aria-label="-"><i data-lucide="minus" class="ico-sm"></i></button><output id="fuM" class="num">${cur.fu.max}</output><button type="button" data-step="1" aria-label="+"><i data-lucide="plus" class="ico-sm"></i></button></div></div>
+            </div>
+            <div class="field"><label for="fuP">${App.t('fu_prompt')}</label><textarea class="textarea" id="fuP" dir="auto" rows="2" style="min-height:64px">${App.esc(App.L(cur.fu.prompt))}</textarea></div>
+            <div class="fu-timeline">${fuPts}<span class="pt end"><i data-lucide="hand" class="ico-sm"></i>${App.t('fu_then')}</span></div>
+            <span class="help" style="font-size:12px;color:var(--text-2)">${App.t('fu_help')}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack" style="gap:var(--s4)">
+        <div class="card sub-card gap" data-api="/transition_rules · stored only — NOT evaluated by backend">
+          <div class="card-h"><h3><i data-lucide="git-branch" class="ico-sm"></i>${App.t('rules_h')}</h3><span class="sub">${App.t('rules_s')}</span><div class="spacer"></div><button class="btn sm ghost" type="button"><i data-lucide="plus" class="ico-sm"></i>${App.t('add_rule')}</button></div>
+          ${rules.length ? rules.map(([to, c, pr]) => `<div class="li-row"><i class="flip-rtl ico-sm muted" data-lucide="corner-down-right"></i><span>${App.t('to')} <b>${App.L(D.stages.find((s) => s.id === to).name)}</b></span><span class="cond">${App.esc(c)}</span><span class="prio">${App.t('prio').replace('{n}', App.n(pr))}</span></div>`).join('') : '<div class="li-row muted">—</div>'}
+        </div>
+        <div class="card sub-card gap" data-api="/actions · forwarded to AI, NOT executed by backend">
+          <div class="card-h"><h3><i data-lucide="zap" class="ico-sm"></i>${App.t('actions_h')}</h3><span class="sub">${App.t('actions_s')}</span><div class="spacer"></div><button class="btn sm ghost" type="button"><i data-lucide="plus" class="ico-sm"></i>${App.t('add_action')}</button></div>
+          ${actions.length ? actions.map(([m, u]) => `<div class="li-row"><span class="method ${m}">${m}</span><span class="url" title="${u}">${u}</span></div>`).join('') : '<div class="li-row muted">—</div>'}
+        </div>
+        <div class="card sub-card" data-api="/knowledge {stage_id, question, answer}">
+          <div class="card-h"><h3><i data-lucide="book-open-text" class="ico-sm"></i>${App.t('know_h')}</h3><span class="sub">${App.n(cur.knowledge)}</span><div class="spacer"></div><button class="btn sm ghost" type="button"><i data-lucide="plus" class="ico-sm"></i>${App.t('add_qa')}</button></div>
+          ${qa.map(([q, a], i) => `<details class="qa" ${i === 0 ? 'open' : ''}><summary><i data-lucide="message-circle-question" class="ico-sm" style="color:var(--brand-ink)"></i><span dir="auto">${App.L(q)}</span><i class="chev ico-sm" data-lucide="chevron-down"></i></summary><p dir="auto">${App.L(a)}</p></details>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function tabPersona() {
+  const a = agent();
+  const prompt = `{% extends "base.jinja2" %}
+{% block persona %}
+أنت {{ persona.name_ar }}، مستشار مبيعات في {{ tenant.name }}.
+تتحدث باللهجة السعودية باحترام، وتتحول للإنجليزية فقط إذا كتب العميل بها.
+{% endblock %}
+
+{% block rules %}
+- Never state a price or availability before calling get_project_units.
+- Offer a 3D tour link with every unit you recommend.
+- Avoid scheduling visits during Friday prayer (11:30–13:30).
+- Currency: {{ project.currency }} · City: {{ project.city }}
+{% endblock %}`;
+  const personas = ['fahd', 'shahad', 'nour'];
+  return `
+    <div class="card" data-api="PATCH /agents/{id} {provider, model, language, settings.persona}">
+      <div class="card-h"><h3>${App.t('p_identity')}</h3></div>
+      <div class="card-b stack" style="gap:var(--s4)">
+        <div class="field"><label>${App.t('p_persona')}</label>
+          <div class="opt-grid">${personas.map((p) => `<label class="opt"><input type="radio" name="persona" ${a.persona === p ? 'checked' : ''}><span><span class="o-t">${App.t('persona_' + p)}</span><br><span class="o-s">${App.t('persona_' + p + '_s')}</span></span></label>`).join('')}</div></div>
+        <div class="form-grid">
+          <div class="field"><label for="pProv">${App.t('p_provider')}</label><select class="select" id="pProv">${['google', 'openai', 'anthropic', 'custom'].map((p) => `<option ${a.provider === p ? 'selected' : ''}>${p}</option>`).join('')}</select></div>
+          <div class="field"><label for="pModel">${App.t('p_model')}</label><input class="input ltr" id="pModel" value="${a.model}"></div>
+          <div class="field"><label for="pLang">${App.t('p_lang')}</label><select class="select" id="pLang">
+            <option ${a.language === 'ar-SA' ? 'selected' : ''}>${App.t('lang_ar_sa')}</option><option ${a.language === 'ar-EG' ? 'selected' : ''}>${App.t('lang_ar_eg')}</option><option>${App.t('lang_en')}</option><option>${App.t('lang_auto')}</option></select></div>
+          <div class="field"><label for="pVoice">${App.t('p_voice')}</label><select class="select" id="pVoice" ${a.service === 'SMAIA' ? '' : ''}><option>Aoede (female)</option><option>Charon (male)</option><option>Kore (female)</option></select></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-api="agent.system_prompt">
+      <div class="card-h"><div><h3>${App.t('p_prompt')}</h3><div class="sub">${App.t('p_prompt_help')}</div></div></div>
+      <div class="card-b"><textarea class="textarea prompt-box" dir="auto" spellcheck="false">${App.esc(prompt)}</textarea></div>
+    </div>`;
+}
+
+function tabChannels() {
+  const a = agent();
+  const S = D.stages;
+  return `<div class="card" data-api="GET/PATCH /channels/ {status, entry_stage_id*, protocol_config} · *entry stage unused by backend">
+    <div class="card-h"><div><h3>${App.t('ch_h')}</h3><div class="sub">${App.t('ch_s')}</div></div><div class="spacer"></div><button class="btn sm" type="button"><i data-lucide="plus" class="ico-sm"></i>${App.t('connect')}</button></div>
+    ${a.channels.map((c, i) => `<div class="ch-row">
+      <div class="who">${App.chBadge(c, 'lg')}<div style="min-width:0"><div class="name">${App.t('ch_' + c)}</div><div class="meta ltr">${{ whatsapp: '+966 11 520 8800', instagram: '@alruba.developments', telegram: '@AlRubaSalesBot', messenger: 'Al Ruba Developments', email: 'sales@alruba.sa', discord: 'Al Ruba Community', tour: 'tours.alruba.sa/sadeel', phone: '+20 2 2461 0090' }[c]}</div></div></div>
+      <div class="field hide-sm2"><label class="sr-only">${App.t('entry')}</label><select class="select" aria-label="${App.t('entry')}">${S.map((s) => `<option ${s.id === 's1' ? 'selected' : ''}>${App.t('entry')}: ${App.L(s.name)}</option>`).join('')}</select></div>
+      <div class="secret hide-sm2"><i data-lucide="key-round" class="ico-sm"></i><span>EAAG••••••••${(7231 + i * 97)}</span><button class="btn sm ghost" type="button">${App.t('reveal')}</button></div>
+      <label class="switch" title="${i === 1 ? App.t('down') : App.t('active')}"><input type="checkbox" ${c === 'discord' ? '' : 'checked'}><span class="track"></span><span class="sr-only">${App.t('active')}</span></label>
+    </div>`).join('')}
+  </div>`;
+}
+
+function tabKnowledge() {
+  return `<div class="card"><div class="card-h"><h3>${App.t('know_h')}</h3><div class="spacer"></div><button class="btn sm primary" type="button"><i data-lucide="plus" class="ico-sm"></i>${App.t('add_qa')}</button></div>
+    <div class="card-b flush table-wrap"><table class="table"><thead><tr><th>${App.t('tab_pipeline')}</th><th class="end">${App.t('kn')}</th><th class="end">${App.t('ac')}</th><th class="end">${App.t('ru')}</th></tr></thead>
+    <tbody>${D.stages.map((s) => `<tr><td><b>${App.L(s.name)}</b><div class="muted" style="font-size:12px">${App.L(s.desc)}</div></td><td class="end num">${App.n(s.knowledge)}</td><td class="end num">${App.n(s.actions)}</td><td class="end num">${App.n(s.rules)}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+
+function tabSettings() {
+  return `<div class="card"><div class="card-h"><h3>${App.t('tab_settings')}</h3></div><div class="card-b stack" style="gap:var(--s5);max-width:760px">
+    <div class="field" data-api="agent.settings.external_endpoint"><label for="ep">${App.t('int_endpoint')}</label><input class="input ltr" id="ep" value="https://smaia.voom.cc/api/v1/agent"><span class="help">${App.t('int_endpoint_help')}</span></div>
+    <div class="field" data-api="POST /webhooks/{tenant_int}/{channel_int}?api_key="><label>${App.t('int_webhook')}</label>
+      <div class="copy-field"><code>https://api.voom.cc/webhooks/12/48?api_key=••••••••</code><button class="btn sm ghost" type="button" data-copy><i data-lucide="copy" class="ico-sm"></i>${App.t('copy')}</button></div><span class="help">${App.t('int_webhook_help')}</span></div>
+    <div class="field gap" data-api="tenant.settings.webhook_api_key · NEW rotate endpoint"><label>${App.t('int_key')}</label>
+      <div class="copy-field"><code>whk_live_••••••••••••••••3f9a</code><button class="btn sm ghost" type="button">${App.t('reveal')}</button><button class="btn sm ghost" type="button"><i data-lucide="refresh-cw" class="ico-sm"></i>${App.t('rotate')}</button></div><span class="help">${App.t('int_key_help')}</span></div>
+    <div class="field" data-api="SMAIA GET /api/v1/channels/health"><label>${App.t('int_health')}</label>
+      <div class="row wrap">${agent().channels.map((c, i) => `<span class="badge ${i === 1 && agent().service === 'SMAIA' ? 'danger' : 'ok'}">${App.chBadge(c)}${App.t('ch_' + c)} · ${i === 1 && agent().service === 'SMAIA' ? App.t('down') : App.t('ok')}</span>`).join('')}</div></div>
+  </div></div>`;
+}
+
+function renderTab() {
+  const body = document.getElementById('tabBody');
+  body.innerHTML = { pipeline: tabPipeline, persona: tabPersona, channels: tabChannels, knowledge: tabKnowledge, settings: tabSettings }[st.tab]();
+  body.querySelectorAll('[data-stage]').forEach((b) => b.onclick = () => { st.stage = b.dataset.stage; renderTab(); App.icons(); });
+  body.querySelectorAll('[data-step]').forEach((b) => b.onclick = () => { const o = document.getElementById('fuM'); o.value = o.textContent = Math.max(0, Math.min(10, +o.textContent + +b.dataset.step)); });
+  body.querySelectorAll('[data-copy]').forEach((b) => b.onclick = () => App.toast(App.t('copied')));
+}
+
+function draw() { renderList(); renderHead(); renderTab(); App.icons(); }
+document.getElementById('testBtn').onclick = () => App.toast(App.t('test_toast'));
+App.onRender(draw);
+App.init('agents');
+</script>
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overview · VOOM Sales</title>
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .hello { display: flex; align-items: flex-end; gap: var(--s4); flex-wrap: wrap; }
+  .hello h1 { font-size: 24px; }
+  .hello .date { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .hello .tools { margin-inline-start: auto; display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; }
+
+  .kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s4); }
+  .kpi { padding: var(--s4) var(--s5); display: flex; flex-direction: column; gap: 6px; }
+  .kpi .k-top { display: flex; align-items: center; gap: var(--s2); color: var(--text-2); font-size: 13px; font-weight: 500; }
+  .kpi .k-ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand-ink); }
+  .kpi .k-ico svg { width: 16px; height: 16px; }
+  .kpi .k-val { font-size: 28px; font-weight: 600; letter-spacing: -.01em; line-height: 1.15; }
+  .kpi .k-foot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .delta { display: inline-flex; align-items: center; gap: 2px; font-weight: 600; font-size: 12px; }
+  .delta svg.lucide { width: 13px; height: 13px; stroke-width: 2.4; }
+  .delta.up { color: var(--ok); } .delta.down { color: var(--danger); }
+
+  .grid-a { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--s4); }
+  .grid-b { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1fr); gap: var(--s4); }
+  .grid-c { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--s4); }
+
+  /* line chart */
+  .legend { display: flex; gap: var(--s4); font-size: 12.5px; color: var(--text-2); flex-wrap: wrap; }
+  .legend .sw { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-inline-end: 6px; }
+  .chart-box { position: relative; height: 260px; direction: ltr; }
+  .chart-box svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .chart-box .tick { fill: var(--muted); font-size: 11px; font-family: var(--font); }
+  .tip {
+    position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+    box-shadow: var(--shadow-2); padding: 8px 10px; font-size: 12.5px; min-width: 150px; opacity: 0; transition: opacity .12s; z-index: 3;
+  }
+  .tip.show { opacity: 1; }
+  .tip .t-h { color: var(--muted); font-size: 11.5px; margin-bottom: 4px; }
+  .tip .t-r { display: flex; align-items: center; gap: 6px; justify-content: space-between; }
+  .tip .t-r b { font-weight: 600; }
+  .tip .dotc { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  /* funnel (HTML bars so they flip with dir) */
+  .funnel { display: flex; flex-direction: column; gap: 10px; }
+  .f-row { display: grid; grid-template-columns: 96px minmax(0,1fr) 72px; align-items: center; gap: var(--s3); font-size: 13px; }
+  .f-row .f-lbl { color: var(--text-2); }
+  .f-track { height: 26px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .f-bar { height: 100%; border-radius: 4px; transition: width .6s var(--ease); min-width: 4px; }
+  .f-row .f-val { text-align: end; font-weight: 600; }
+  .f-row .f-val small { display: block; color: var(--muted); font-weight: 400; font-size: 11.5px; }
+  .f-sep { border-top: 1px dashed var(--border-strong); margin: 4px 0; }
+  .f-note { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-top: var(--s2); }
+
+  .bars { display: flex; flex-direction: column; gap: 12px; }
+  .b-row { display: grid; grid-template-columns: 120px minmax(0,1fr) 64px; gap: var(--s3); align-items: center; font-size: 13px; }
+  .b-row .b-lbl { display: flex; align-items: center; gap: 8px; color: var(--text-2); min-width: 0; }
+  .b-track { height: 10px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+  .b-bar { height: 100%; background: var(--series-1); border-radius: 999px; }
+  .b-row .b-val { text-align: end; font-weight: 600; }
+  .b-row .b-val small { color: var(--muted); font-weight: 400; margin-inline-start: 4px; }
+
+  .att-list { display: flex; flex-direction: column; }
+  .att { display: flex; align-items: center; gap: var(--s3); padding: 12px var(--s5); border-bottom: 1px solid var(--border); color: inherit; }
+  .att:last-child { border-bottom: 0; }
+  .att:hover { background: var(--surface-2); text-decoration: none; }
+  .att .why { font-size: 12px; color: var(--danger); display: flex; align-items: center; gap: 4px; }
+  .att .when { font-size: 12px; color: var(--muted); white-space: nowrap; margin-inline-start: auto; }
+
+  .feed { display: flex; flex-direction: column; }
+  .ev { display: grid; grid-template-columns: 32px minmax(0,1fr) auto; gap: var(--s3); padding: 12px var(--s5); border-bottom: 1px solid var(--border); align-items: start; }
+  .ev:last-child { border-bottom: 0; }
+  .ev .e-ico { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--text-2); }
+  .ev .e-ico.ai { background: var(--brand-soft); color: var(--brand-ink); }
+  .ev .e-ico.win { background: var(--ok-soft); color: var(--ok); }
+  .ev .e-ico svg { width: 16px; height: 16px; }
+  .ev .e-t { font-size: 13.5px; }
+  .ev .e-t b { font-weight: 600; }
+  .ev .e-m { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
+  .ev .e-w { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .stage-mv { display: inline-flex; align-items: center; gap: 4px; }
+
+  .agent-name { display: flex; align-items: center; gap: var(--s3); }
+  .agent-av { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand-ink); flex-shrink: 0; }
+  .agent-av svg { width: 17px; height: 17px; }
+  .meter { display: flex; align-items: center; gap: 8px; }
+  .meter .m-track { width: 64px; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .meter .m-fill { height: 100%; background: var(--brand); border-radius: 999px; }
+  .flag { font-size: 11px; font-weight: 600; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; margin-inline-start: 6px; }
+
+  @media (max-width: 1320px) { .kpis { grid-template-columns: repeat(3, minmax(0,1fr)); } .grid-b { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } .grid-b > :last-child { grid-column: 1 / -1; } }
+  @media (max-width: 960px) { .grid-a, .grid-b, .grid-c { grid-template-columns: minmax(0,1fr); } .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width: 520px) { #toAvatars { display: none; } .kpis { grid-template-columns: minmax(0,1fr); } .kpi .k-val { font-size: 24px; } .b-row { grid-template-columns: 96px minmax(0,1fr) 56px; } }
+</style>
+</head>
+<body data-title="nav_overview">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main class="content" id="content">
+
+      <section class="hello">
+        <div>
+          <h1 id="greet"></h1>
+          <p class="date" id="today"></p>
+        </div>
+        <div class="tools">
+          <div class="seg" role="group" id="rangeSeg" aria-label="Date range">
+            <button type="button" data-r="7" aria-pressed="false" data-i18n="last7"></button>
+            <button type="button" data-r="30" aria-pressed="true" data-i18n="last30"></button>
+            <button type="button" data-r="90" aria-pressed="false" data-i18n="last90"></button>
+          </div>
+          <select class="select" id="projSel" style="width:auto;min-width:170px" data-i18n-label="all_projects"></select>
+          <button class="btn" type="button"><i data-lucide="download"></i><span data-i18n="export"></span></button>
+        </div>
+      </section>
+
+      <div class="api-legend row wrap" style="font-size:12px">
+        <span class="badge info"><i data-lucide="plug"></i><span data-i18n="api_legend_ok"></span></span>
+        <span class="badge warn"><i data-lucide="triangle-alert"></i><span data-i18n="api_legend_gap"></span></span>
+      </div>
+
+      <section class="alert danger" id="takeover" data-api="GET /tenants/{tid}/chats/ → priority∈{high,urgent} & !ai_enabled (client filter)">
+        <div class="a-ico"><i data-lucide="hand"></i></div>
+        <div class="grow">
+          <h4 id="toTitle"></h4>
+          <p data-i18n="to_body"></p>
+        </div>
+        <div class="row" id="toAvatars" style="gap:0"></div>
+        <a class="btn primary" href="inbox.html?filter=human"><span data-i18n="to_cta"></span><i class="flip-rtl" data-lucide="arrow-right"></i></a>
+      </section>
+
+      <section class="kpis gap" id="kpis" data-api="NEW GET /tenants/{tid}/analytics/summary?range=30d"></section>
+
+      <section class="grid-a">
+        <div class="card gap" data-api="NEW GET /analytics/conversations?bucket=day">
+          <div class="card-h">
+            <div><h3 data-i18n="conv_title"></h3><div class="sub" data-i18n="conv_sub"></div></div>
+            <div class="spacer"></div>
+            <div class="legend" id="lineLegend"></div>
+          </div>
+          <div class="card-b">
+            <div class="chart-box" id="lineChart"><div class="tip" id="lineTip"></div></div>
+          </div>
+        </div>
+        <div class="card" data-api="GET /tenants/{tid}/deals/ → group by deal_status">
+          <div class="card-h">
+            <div><h3 data-i18n="funnel_title"></h3><div class="sub" data-i18n="funnel_sub"></div></div>
+          </div>
+          <div class="card-b">
+            <div class="funnel" id="funnel"></div>
+            <p class="f-note"><i data-lucide="info" class="ico-sm"></i><span data-i18n="funnel_note"></span></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-b">
+        <div class="card" data-api="GET chats + channels.protocol (client join)">
+          <div class="card-h"><div><h3 data-i18n="mix_title"></h3><div class="sub" data-i18n="mix_sub"></div></div></div>
+          <div class="card-b"><div class="bars" id="mix"></div></div>
+        </div>
+        <div class="card gap" data-api="NEW GET /analytics/agents (leads, handoffs)">
+          <div class="card-h">
+            <div><h3 data-i18n="agents_title"></h3><div class="sub" data-i18n="agents_sub"></div></div>
+            <div class="spacer"></div>
+            <a class="btn sm ghost" href="agents.html"><span data-i18n="manage"></span><i class="flip-rtl ico-sm" data-lucide="chevron-right"></i></a>
+          </div>
+          <div class="card-b flush table-wrap">
+            <table class="table" id="agentsTbl"></table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h">
+            <div><h3 data-i18n="att_title"></h3><div class="sub" data-i18n="att_sub"></div></div>
+            <div class="spacer"></div>
+            <a class="btn sm ghost" href="inbox.html?filter=human" data-i18n="view_all"></a>
+          </div>
+          <div class="att-list" id="attList"></div>
+        </div>
+      </section>
+
+      <section class="grid-c">
+        <div class="card gap" data-api="deal.details.project (convention) + NEW analytics">
+          <div class="card-h">
+            <div><h3 data-i18n="proj_title"></h3><div class="sub" data-i18n="proj_sub"></div></div>
+          </div>
+          <div class="card-b flush table-wrap"><table class="table" id="projTbl"></table></div>
+        </div>
+        <div class="card gap" data-api="deal.activity_log · NEW tenant-wide feed">
+          <div class="card-h"><div><h3 data-i18n="feed_title"></h3><div class="sub" data-i18n="feed_sub"></div></div></div>
+          <div class="feed" id="feed"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+App.extend({
+  en: {
+    greet: 'Good morning, Ahmed', export: 'Export', all_projects: 'All projects', manage: 'Manage',
+    to_title: '{n} conversations need a human', to_body: 'AI paused after max follow-ups or the client asked for a person. Reply before they go cold.', to_cta: 'Open queue',
+    k_leads: 'New leads', k_active: 'Active conversations', k_ai: 'Handled end-to-end by AI', k_pipe: 'Open pipeline value', k_won: 'Deals won',
+    vs_prev: 'vs previous 30 days', k_active_f: 'across 8 channels', k_ai_f: 'no human takeover', k_pipe_f: 'SAR equivalent', k_won_f: 'SAR 61.4M closed',
+    conv_title: 'Conversation volume', conv_sub: 'Daily conversations started vs. resolved without a human',
+    s_started: 'Conversations started', s_ai: 'Resolved by AI only',
+    funnel_title: 'Deal funnel', funnel_sub: 'Open deals by status', funnel_note: 'Lost deals are shown separately; conversion is from “New”.',
+    mix_title: 'Leads by channel', mix_sub: 'Share of new conversations',
+    agents_title: 'AI agent performance', agents_sub: 'Last 30 days',
+    th_agent: 'Agent', th_convs: 'Conversations', th_lead: 'Lead rate', th_hand: 'Handoffs',
+    att_title: 'Needs attention', att_sub: 'AI paused · waiting on your team',
+    why_followups: 'No reply after 3 follow-ups', why_question: 'Asked for a human', why_handover: 'Ready to pay deposit',
+    proj_title: 'Projects', proj_sub: 'Leads and pipeline per development',
+    th_proj: 'Project', th_leads: 'Leads', th_visits: 'Visits booked', th_pipe: 'Pipeline', th_won: 'Won',
+    feed_title: 'Stage movements', feed_sub: 'From each deal’s activity log',
+    ev_ai_adv: '<b>{agent}</b> moved <b>{who}</b> forward', ev_won: '<b>{user}</b> marked <b>{who}</b> as won', ev_takeover: 'AI paused for <b>{who}</b> after 3 follow-ups',
+    ev_lead: '<b>{agent}</b> captured a lead: <b>{who}</b>',
+  },
+  ar: {
+    greet: 'صباح الخير يا أحمد', export: 'تصدير', all_projects: 'كل المشاريع', manage: 'إدارة',
+    to_title: '{n} محادثات تحتاج تدخّل موظف', to_body: 'توقّف الذكاء الاصطناعي بعد استنفاد المتابعات أو طلب العميل التحدث مع موظف. رُدّ قبل أن يفتر اهتمامه.', to_cta: 'افتح القائمة',
+    k_leads: 'عملاء محتملون جدد', k_active: 'محادثات نشطة', k_ai: 'أنجزها الذكاء الاصطناعي بالكامل', k_pipe: 'قيمة الصفقات المفتوحة', k_won: 'صفقات مُغلقة بنجاح',
+    vs_prev: 'مقارنة بآخر ٣٠ يوماً قبلها', k_active_f: 'عبر ٨ قنوات', k_ai_f: 'دون تدخّل موظف', k_pipe_f: 'ما يعادلها بالريال', k_won_f: '61.4 مليون ر.س',
+    conv_title: 'حجم المحادثات', conv_sub: 'المحادثات اليومية الجديدة مقابل التي أُنجزت دون موظف',
+    s_started: 'محادثات جديدة', s_ai: 'أنجزها الذكاء الاصطناعي',
+    funnel_title: 'قمع الصفقات', funnel_sub: 'الصفقات المفتوحة حسب الحالة', funnel_note: 'الصفقات الخاسرة معروضة منفصلة، ونسبة التحويل محسوبة من «جديد».',
+    mix_title: 'العملاء حسب القناة', mix_sub: 'نسبة المحادثات الجديدة',
+    agents_title: 'أداء وكلاء الذكاء الاصطناعي', agents_sub: 'آخر ٣٠ يوماً',
+    th_agent: 'الوكيل', th_convs: 'المحادثات', th_lead: 'نسبة العملاء', th_hand: 'تحويل لموظف',
+    att_title: 'تحتاج انتباهك', att_sub: 'الذكاء الاصطناعي متوقف · بانتظار فريقك',
+    why_followups: 'لا رد بعد ٣ متابعات', why_question: 'طلب التحدث مع موظف', why_handover: 'جاهز لدفع العربون',
+    proj_title: 'المشاريع', proj_sub: 'العملاء والصفقات لكل مشروع',
+    th_proj: 'المشروع', th_leads: 'العملاء', th_visits: 'زيارات محجوزة', th_pipe: 'الصفقات', th_won: 'مباعة',
+    feed_title: 'حركة المراحل', feed_sub: 'من سجل نشاط كل صفقة',
+    ev_ai_adv: 'نقل <b>{agent}</b> العميل <b>{who}</b> للمرحلة التالية', ev_won: 'أغلق <b>{user}</b> صفقة <b>{who}</b> بنجاح', ev_takeover: 'توقف الذكاء الاصطناعي مع <b>{who}</b> بعد ٣ متابعات',
+    ev_lead: 'سجّل <b>{agent}</b> عميلاً جديداً: <b>{who}</b>',
+  },
+});
+
+const D = window.DATA;
+let range = 30;
+const seeded = (s) => () => ((s = Math.imul(s ^ (s >>> 15), 2246822507) ^ Math.imul(s ^ (s >>> 13), 3266489909)) >>> 0) / 4294967296;
+
+function series(days) {
+  const r = seeded(days * 7 + 3), a = [], b = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(Date.now() - (days - 1 - i) * 86400000);
+    const dow = d.getDay(); /* Fri(5)/Sat(6) = MENA weekend: more browsing, more chats */
+    const base = 70 + i * (40 / days) + (dow === 5 || dow === 6 ? 28 : 0) + (dow === 4 ? 12 : 0);
+    const v = Math.round(base + r() * 22);
+    a.push({ d, v }); b.push({ d, v: Math.round(v * (0.78 + r() * 0.1)) });
+  }
+  return [a, b];
+}
+
+function renderHello() {
+  const now = new Date();
+  document.getElementById('greet').textContent = App.t('greet');
+  document.getElementById('today').textContent = `${App.date(now, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · ${App.hijri(now)}`;
+  const sel = document.getElementById('projSel');
+  sel.innerHTML = `<option value="">${App.t('all_projects')}</option>` + Object.entries(D.projects).map(([k, p]) => `<option value="${k}">${App.L(p.name)} — ${App.L(p.city)}</option>`).join('');
+  document.querySelectorAll('#rangeSeg button').forEach((b) => { b.setAttribute('aria-pressed', +b.dataset.r === range); b.onclick = () => { range = +b.dataset.r; App.render(); }; });
+}
+
+function renderTakeover() {
+  const list = D.chats.filter((c) => !c.ai && c.status !== 'closed' && (c.priority === 'high' || c.priority === 'urgent'));
+  document.getElementById('toTitle').textContent = App.t('to_title').replace('{n}', App.n(list.length));
+  document.getElementById('toAvatars').innerHTML = list.slice(0, 4).map((c, i) =>
+    `<span class="avatar sm" style="margin-inline-start:${i ? -8 : 0}px;border:2px solid var(--surface)">${App.initials(App.L(c.name))}</span>`).join('');
+}
+
+function renderKpis() {
+  const f = range / 30;
+  const k = [
+    { ico: 'user-plus', key: 'k_leads', val: App.n(Math.round(625 * f)), d: 12.4, foot: App.t('vs_prev') },
+    { ico: 'messages-square', key: 'k_active', val: App.n(184), d: 8.1, foot: App.t('k_active_f') },
+    { ico: 'sparkles', key: 'k_ai', val: App.pct(0.87), d: 3.2, foot: App.t('k_ai_f') },
+    { ico: 'wallet', key: 'k_pipe', val: App.money(48600000 * (0.9 + f / 10)), d: -2.3, foot: App.t('k_pipe_f') },
+    { ico: 'trophy', key: 'k_won', val: App.n(Math.round(23 * f)), d: 15.0, foot: App.t('k_won_f') },
+  ];
+  document.getElementById('kpis').innerHTML = k.map((x) => `
+    <article class="card kpi">
+      <div class="k-top"><span class="k-ico"><i data-lucide="${x.ico}"></i></span>${App.t(x.key)}</div>
+      <div class="k-val num">${x.val}</div>
+      <div class="k-foot">
+        <span class="delta ${x.d >= 0 ? 'up' : 'down'}"><i data-lucide="${x.d >= 0 ? 'trending-up' : 'trending-down'}"></i>${App.n(Math.abs(x.d), { maximumFractionDigits: 1 })}%</span>
+        <span>${x.foot}</span>
+      </div>
+    </article>`).join('');
+}
+
+function renderLine() {
+  const box = document.getElementById('lineChart');
+  const tip = document.getElementById('lineTip');
+  const [a, b] = series(range);
+  const S = [{ data: a, color: 'var(--series-1)', key: 's_started' }, { data: b, color: 'var(--series-2)', key: 's_ai' }];
+  document.getElementById('lineLegend').innerHTML = S.map((s) => `<span><span class="sw" style="background:${s.color}"></span>${App.t(s.key)}</span>`).join('');
+
+  const W = box.clientWidth || 700, H = box.clientHeight || 260, P = { l: 36, r: 10, t: 10, b: 26 };
+  const max = Math.ceil(Math.max(...a.map((p) => p.v)) / 50) * 50;
+  const x = (i) => P.l + (i * (W - P.l - P.r)) / (a.length - 1);
+  const y = (v) => P.t + (1 - v / max) * (H - P.t - P.b);
+  const ticks = [0, max / 4, max / 2, (3 * max) / 4, max];
+  const step = Math.ceil(a.length / 6);
+  const path = (d) => d.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join('');
+  const area = (d) => `${path(d)}L${x(d.length - 1)},${y(0)}L${x(0)},${y(0)}Z`;
+
+  box.querySelector('svg')?.remove();
+  box.insertAdjacentHTML('afterbegin', `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${App.t('conv_title')}">
+      <defs><linearGradient id="g1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--series-1)" stop-opacity=".16"/><stop offset="1" stop-color="var(--series-1)" stop-opacity="0"/></linearGradient></defs>
+      ${ticks.map((t) => `<line x1="${P.l}" x2="${W - P.r}" y1="${y(t)}" y2="${y(t)}" stroke="${t ? 'var(--grid)' : 'var(--axis)'}" stroke-width="1"/>
+        <text class="tick" x="${P.l - 8}" y="${y(t) + 4}" text-anchor="end">${App.n(t)}</text>`).join('')}
+      ${a.map((p, i) => (i % step === 0 || i === a.length - 1) ? `<text class="tick" x="${x(i)}" y="${H - 6}" text-anchor="middle">${App.date(p.d)}</text>` : '').join('')}
+      <path d="${area(a)}" fill="url(#g1)"/>
+      ${S.map((s) => `<path d="${path(s.data)}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`).join('')}
+      <line id="xh" y1="${P.t}" y2="${y(0)}" stroke="var(--axis)" stroke-width="1" opacity="0"/>
+      ${S.map((s, k) => `<circle id="hp${k}" r="4.5" fill="${s.color}" stroke="var(--surface)" stroke-width="2" opacity="0"/>`).join('')}
+      <rect x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}" fill="transparent" id="hit" tabindex="0"/>
+    </svg>`);
+
+  const svg = box.querySelector('svg');
+  const show = (i) => {
+    i = Math.max(0, Math.min(a.length - 1, i));
+    svg.querySelector('#xh').setAttribute('x1', x(i)); svg.querySelector('#xh').setAttribute('x2', x(i)); svg.querySelector('#xh').setAttribute('opacity', 1);
+    S.forEach((s, k) => { const c = svg.querySelector('#hp' + k); c.setAttribute('cx', x(i)); c.setAttribute('cy', y(s.data[i].v)); c.setAttribute('opacity', 1); });
+    tip.innerHTML = `<div class="t-h">${App.date(a[i].d, { weekday: 'short', day: 'numeric', month: 'short' })}</div>` +
+      S.map((s) => `<div class="t-r"><span><span class="dotc" style="background:${s.color}"></span> ${App.t(s.key)}</span><b class="num">${App.n(s.data[i].v)}</b></div>`).join('') +
+      `<div class="t-r muted" style="margin-top:4px"><span>AI %</span><b class="num">${App.pct(b[i].v / a[i].v)}</b></div>`;
+    const left = x(i) > W / 2 ? x(i) - tip.offsetWidth - 12 : x(i) + 12;
+    tip.style.left = left + 'px'; tip.style.top = '8px'; tip.classList.add('show'); svg._i = i;
+  };
+  const hide = () => { tip.classList.remove('show'); svg.querySelectorAll('#xh,[id^=hp]').forEach((e) => e.setAttribute('opacity', 0)); };
+  const hit = svg.querySelector('#hit');
+  hit.addEventListener('mousemove', (e) => { const r = svg.getBoundingClientRect(); show(Math.round(((e.clientX - r.left) * (W / r.width) - P.l) / ((W - P.l - P.r) / (a.length - 1)))); });
+  hit.addEventListener('mouseleave', hide); hit.addEventListener('blur', hide);
+  hit.addEventListener('focus', () => show(a.length - 1));
+  hit.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') show((svg._i ?? a.length) - 1); if (e.key === 'ArrowRight') show((svg._i ?? -1) + 1); });
+}
+
+function renderFunnel() {
+  const f = range / 30;
+  const rows = [['new', 412], ['qualified', 238], ['proposal', 121], ['negotiation', 64], ['won', 23]].map(([k, v]) => [k, Math.round(v * f)]);
+  const lost = Math.round(58 * f), top = rows[0][1];
+  document.getElementById('funnel').innerHTML = rows.map(([k, v], i) => `
+    <div class="f-row">
+      <span class="f-lbl">${App.t('ds_' + k)}</span>
+      <div class="f-track"><div class="f-bar" style="width:${(v / top) * 100}%;background:${k === 'won' ? 'var(--ok)' : `var(--ord-${i + 1})`}"></div></div>
+      <span class="f-val num">${App.n(v)}<small>${i ? App.pct(v / top, 1) : '100%'}</small></span>
+    </div>`).join('') + `<div class="f-sep"></div>
+    <div class="f-row"><span class="f-lbl">${App.t('ds_lost')}</span>
+      <div class="f-track"><div class="f-bar" style="width:${(lost / top) * 100}%;background:var(--danger)"></div></div>
+      <span class="f-val num">${App.n(lost)}<small>${App.pct(lost / top, 1)}</small></span></div>`;
+}
+
+function renderMix() {
+  const rows = [['whatsapp', 38], ['tour', 24], ['instagram', 14], ['phone', 11], ['telegram', 5], ['messenger', 4], ['email', 3], ['discord', 1]];
+  const total = 625 * (range / 30);
+  document.getElementById('mix').innerHTML = rows.map(([ch, p]) => `
+    <div class="b-row">
+      <span class="b-lbl">${App.chBadge(ch)}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${App.t('ch_' + ch)}</span></span>
+      <div class="b-track" title="${App.n(Math.round(total * p / 100))}"><div class="b-bar" style="width:${(p / 38) * 100}%"></div></div>
+      <span class="b-val num">${p}%</span>
+    </div>`).join('');
+}
+
+function renderAgents() {
+  const icon = { SMAIA: 'message-square-text', Voomi: 'box', Calling: 'phone-call' };
+  document.getElementById('agentsTbl').innerHTML = `
+    <thead><tr><th>${App.t('th_agent')}</th><th class="end">${App.t('th_convs')}</th><th>${App.t('th_lead')}</th><th class="end">${App.t('th_hand')}</th></tr></thead>
+    <tbody>${D.agents.map((a) => { const rate = a.leads / a.convs; return `
+      <tr>
+        <td><div class="agent-name"><span class="agent-av"><i data-lucide="${icon[a.service]}"></i></span>
+          <div style="min-width:0"><div style="font-weight:500">${App.L(a.name)}</div>
+          <div class="row" style="gap:4px;margin-top:2px">${a.channels.slice(0, 4).map((c) => App.chBadge(c)).join('')}${a.channels.length > 4 ? `<span class="muted" style="font-size:12px">+${a.channels.length - 4}</span>` : ''}</div></div></div></td>
+        <td class="end num">${App.n(Math.round(a.convs * range / 30))}</td>
+        <td><div class="meter"><div class="m-track"><div class="m-fill" style="width:${rate * 300}%"></div></div><span class="num">${App.pct(rate)}</span></div></td>
+        <td class="end num">${App.n(Math.round(a.handoffs * range / 30))}</td>
+      </tr>`; }).join('')}</tbody>`;
+}
+
+function renderAttention() {
+  const list = D.chats.filter((c) => !c.ai && c.status !== 'closed' && (c.priority === 'high' || c.priority === 'urgent')).slice(0, 5);
+  document.getElementById('attList').innerHTML = list.map((c) => `
+    <a class="att" href="inbox.html?chat=${c.id}">
+      <span class="avatar sm">${App.initials(App.L(c.name))}</span>
+      <div style="min-width:0">
+        <div class="row" style="gap:6px"><span style="font-weight:500">${App.L(c.name)}</span>${App.chBadge(c.ch)}</div>
+        <div class="why"><i data-lucide="${c.takeover === 'handover' ? 'badge-dollar-sign' : c.takeover === 'question' ? 'user-round' : 'timer-off'}" class="ico-sm"></i>${App.t('why_' + c.takeover)}</div>
+      </div>
+      <span class="when">${App.ago(c.mins)}</span>
+    </a>`).join('');
+}
+
+function renderProjects() {
+  const rows = [
+    ['sadeel', 214, 38, 96400000, 9], ['jawharat-al-ruba', 168, 27, 118200000, 6], ['flamant', 97, 19, 41800000, 4],
+    ['stax', 88, 14, 63500000, 3], ['nile-view', 58, 11, 212000000, 1],
+  ];
+  const f = range / 30;
+  document.getElementById('projTbl').innerHTML = `
+    <thead><tr><th>${App.t('th_proj')}</th><th class="end">${App.t('th_leads')}</th><th class="end">${App.t('th_visits')}</th><th class="end">${App.t('th_pipe')}</th><th class="end">${App.t('th_won')}</th></tr></thead>
+    <tbody>${rows.map(([k, l, v, p, w]) => { const pr = D.projects[k]; return `
+      <tr><td><div class="who"><div style="min-width:0"><div class="name">${App.L(pr.name)}<span class="flag">${pr.cc}</span></div><div class="meta">${App.L(pr.city)} · ${App.L(pr.kind)}</div></div></div></td>
+      <td class="end num">${App.n(Math.round(l * f))}</td><td class="end num">${App.n(Math.round(v * f))}</td>
+      <td class="end num">${App.money(p, pr.cur)}</td><td class="end num">${App.n(Math.round(w * f))}</td></tr>`; }).join('')}</tbody>`;
+}
+
+function renderFeed() {
+  const S = Object.fromEntries(D.stages.map((s) => [s.id, s]));
+  const nm = (id) => App.L(D.chats.find((c) => c.id === id).name);
+  const arrow = `<i class="flip-rtl ico-sm" data-lucide="arrow-right"></i>`;
+  const ev = [
+    { ico: 'sparkles', cls: 'ai', t: App.t('ev_ai_adv').replace('{agent}', 'Fahad').replace('{who}', nm('c2')), m: `<span class="stage-mv">${App.L(S.s2.name)} ${arrow} ${App.L(S.s3.name)}</span>${App.chBadge('instagram')}`, w: 4 },
+    { ico: 'trophy', cls: 'win', t: App.t('ev_won').replace('{user}', App.L(D.team[2].name)).replace('{who}', nm('c14')), m: `${App.money(2950000, 'EGP')} · ${App.L(D.projects['nile-view'].name)}`, w: 52 },
+    { ico: 'timer-off', cls: '', t: App.t('ev_takeover').replace('{who}', nm('c1')), m: `<span class="badge danger"><i data-lucide="hand"></i>${App.t('needs_human')}</span>`, w: 66 },
+    { ico: 'sparkles', cls: 'ai', t: App.t('ev_ai_adv').replace('{agent}', 'Nour').replace('{who}', nm('c3')), m: `<span class="stage-mv">${App.L(S.s1.name)} ${arrow} ${App.L(S.s2.name)}</span>${App.chBadge('phone')}`, w: 88 },
+    { ico: 'user-plus', cls: 'ai', t: App.t('ev_lead').replace('{agent}', 'Fahad').replace('{who}', nm('c5')), m: `${App.chBadge('tour')} ${App.L(D.projects.flamant.name)} · B3-F5-502`, w: 121 },
+  ];
+  document.getElementById('feed').innerHTML = ev.map((e) => `
+    <div class="ev"><span class="e-ico ${e.cls}"><i data-lucide="${e.ico}"></i></span>
+      <div style="min-width:0"><div class="e-t">${e.t}</div><div class="e-m">${e.m}</div></div>
+      <span class="e-w">${App.ago(e.w)}</span></div>`).join('');
+}
+
+App.onRender(() => { renderHello(); renderTakeover(); renderKpis(); renderFunnel(); renderMix(); renderAgents(); renderAttention(); renderProjects(); renderFeed(); requestAnimationFrame(renderLine); });
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { renderLine(); App.icons(); }, 120); });
+App.init('overview');
+</script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pipeline · VOOM Sales</title>
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .content.pipe { max-width: none; }
+  .toolbar { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+  .toolbar .spacer { flex: 1; }
+  .pipe-sel { display: flex; align-items: center; gap: var(--s2); }
+  .pipe-sel .select { min-width: 220px; font-weight: 600; }
+  .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s4); }
+  .sum { padding: var(--s3) var(--s4); display: flex; align-items: center; gap: var(--s3); }
+  .sum .s-ico { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--text-2); flex-shrink: 0; }
+  .sum .s-l { font-size: 12.5px; color: var(--muted); }
+  .sum .s-v { font-size: 20px; font-weight: 600; line-height: 1.2; }
+
+  .board-wrap { overflow-x: auto; padding-bottom: var(--s2); margin-inline: calc(-1 * var(--s6)); padding-inline: var(--s6); }
+  .board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(280px, 1fr); gap: var(--s3); min-height: 60vh; }
+  .col { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-lg); display: flex; flex-direction: column; min-width: 0; transition: background .15s, border-color .15s; }
+  .col.over { background: var(--brand-soft); border-color: var(--brand); border-style: dashed; }
+  .col-h { padding: var(--s3) var(--s3) var(--s2); display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--border); }
+  .col-h .ct { display: flex; align-items: center; gap: var(--s2); }
+  .col-h .cn { font-weight: 600; font-size: 14px; }
+  .col-h .cc { font-size: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; color: var(--text-2); }
+  .col-h .cv { margin-inline-start: auto; font-size: 13px; font-weight: 600; }
+  .col-h .cm { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); flex-wrap: wrap; }
+  .col-h .cm .badge { height: 20px; font-size: 11px; padding: 0 6px; background: var(--surface); }
+  .col-bar { height: 3px; border-radius: 3px; background: var(--border); overflow: hidden; }
+  .col-bar i { display: block; height: 100%; background: var(--brand); }
+  .col-b { padding: var(--s2); display: flex; flex-direction: column; gap: var(--s2); flex: 1; overflow-y: auto; max-height: calc(100vh - 360px); min-height: 120px; }
+  .col-add { margin: 0 var(--s2) var(--s2); height: 34px; border: 1px dashed var(--border-strong); background: transparent; border-radius: var(--r-sm); color: var(--muted); font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .col-add:hover { color: var(--brand-ink); border-color: var(--brand); background: var(--surface); }
+
+  .deal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; cursor: grab; box-shadow: var(--shadow-1);
+    transition: box-shadow .15s, transform .15s, border-color .15s; text-align: start; width: 100%; }
+  .deal:hover { box-shadow: var(--shadow-2); border-color: var(--border-strong); }
+  .deal.dragging { opacity: .45; transform: rotate(1.5deg); }
+  .deal.hot { border-inline-start: 3px solid var(--danger); }
+  .deal .d-top { display: flex; align-items: center; gap: 8px; }
+  .deal .d-name { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .deal .d-sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .deal .d-val { font-weight: 600; font-size: 14px; }
+  .deal .d-foot { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+  .deal .d-foot .badge { height: 20px; font-size: 11px; padding: 0 6px; }
+  .deal .d-foot .avatar { margin-inline-start: auto; }
+  .deal .age { display: inline-flex; align-items: center; gap: 3px; }
+  .deal .age.stale { color: var(--warn); font-weight: 500; }
+
+  .dropbar { position: fixed; inset-inline: 0; bottom: 0; display: flex; gap: var(--s3); justify-content: center; padding: var(--s4); z-index: 50; transform: translateY(110%); transition: transform .2s var(--ease); pointer-events: none; }
+  .dropbar.show { transform: translateY(0); pointer-events: auto; }
+  .drop { width: min(280px, 44vw); height: 64px; border-radius: var(--r-lg); display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; border: 2px dashed; background: var(--surface); box-shadow: var(--shadow-3); }
+  .drop.won { color: var(--ok); border-color: var(--ok); } .drop.lost { color: var(--danger); border-color: var(--danger); }
+  .drop.over.won { background: var(--ok-soft); } .drop.over.lost { background: var(--danger-soft); }
+
+  .tbl-card { overflow: hidden; }
+  .table th button { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .table th button:focus-visible { box-shadow: var(--ring); border-radius: 4px; }
+
+  .dh-name { font-size: 17px; font-weight: 600; }
+  .big-val { font-size: 26px; font-weight: 600; }
+  .kv { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px 12px; font-size: 13.5px; margin: 0; }
+  .kv dt { color: var(--muted); } .kv dd { margin: 0; }
+  .sec-t { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin-bottom: var(--s2); }
+  [lang="ar"] .sec-t { text-transform: none; letter-spacing: 0; font-size: 13px; }
+  .log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .log li { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 10px; font-size: 13px; }
+  .log .li-ico { width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; color: var(--text-2); }
+  .log .li-ico.ai { background: var(--brand-soft); color: var(--brand-ink); }
+  .log .li-ico svg { width: 14px; height: 14px; }
+  .log .li-m { font-size: 11.5px; color: var(--muted); }
+  .stack-q { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .stack-q .badge { height: 26px; }
+  .json { font-family: ui-monospace, Consolas, monospace; font-size: 12px; background: var(--surface-2); border-radius: var(--r-sm); padding: 10px; direction: ltr; text-align: left; white-space: pre; overflow-x: auto; color: var(--text-2); }
+
+  @media (max-width: 1100px) { .summary { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width: 720px) { .board-wrap { margin-inline: calc(-1 * var(--s4)); padding-inline: var(--s4); } .board { grid-auto-columns: 86%; } .pipe-sel .select { min-width: 0; } .col-b { max-height: none; } .toolbar .select { flex: 1; } }
+  @media (max-width: 480px) { .sum { padding: var(--s3); gap: var(--s2); } .sum .s-ico { display: none; } .sum .s-v { font-size: 17px; } }
+</style>
+</head>
+<body data-title="nav_pipeline">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main class="content pipe">
+
+      <section class="toolbar">
+        <div class="pipe-sel" data-api="GET /tenants/{tid}/agents/ · GET /stages/ (filter by agent_id client-side)">
+          <label class="sr-only" for="agentSel" data-i18n="pipeline_of"></label>
+          <select class="select" id="agentSel"></select>
+        </div>
+        <div class="seg" role="group" aria-label="Group by" id="groupSeg">
+          <button type="button" data-g="stage"><i data-lucide="route" class="ico-sm"></i><span data-i18n="by_stage"></span></button>
+          <button type="button" data-g="status"><i data-lucide="tags" class="ico-sm"></i><span data-i18n="by_status"></span></button>
+        </div>
+        <div class="spacer"></div>
+        <select class="select" id="projF" style="width:auto;min-width:0"></select>
+        <select class="select" id="chF" style="width:auto;min-width:0"></select>
+        <select class="select" id="ownF" style="width:auto;min-width:0"></select>
+        <div class="seg" role="group" aria-label="View" id="viewSeg">
+          <button type="button" data-v="board" aria-label="Board"><i data-lucide="kanban" class="ico-sm"></i><span class="hide-sm" data-i18n="board"></span></button>
+          <button type="button" data-v="table" aria-label="Table"><i data-lucide="table-2" class="ico-sm"></i><span class="hide-sm" data-i18n="table"></span></button>
+        </div>
+        <button class="btn primary" type="button" id="newDeal"><i data-lucide="plus"></i><span data-i18n="new_deal"></span></button>
+      </section>
+
+      <section class="summary gap" id="summary" data-api="NEW GET /analytics/pipeline?agent_id= (stage durations need timestamps)"></section>
+
+      <section id="view"></section>
+    </main>
+  </div>
+</div>
+
+<div class="dropbar" id="dropbar" aria-hidden="true">
+  <div class="drop won" data-drop="won"><i data-lucide="trophy"></i><span data-i18n="drop_won"></span></div>
+  <div class="drop lost" data-drop="lost"><i data-lucide="circle-x"></i><span data-i18n="drop_lost"></span></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle"></aside>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+App.extend({
+  en: {
+    pipeline_of: 'Pipeline', by_stage: 'Stages', by_status: 'Status', board: 'Board', table: 'Table', new_deal: 'New deal',
+    all_projects: 'All projects', all_channels: 'All channels', all_owners: 'All owners', ai_only: 'AI only',
+    s_open: 'Open deals', s_value: 'Pipeline value', s_age: 'Avg. time in stage', s_win: 'Win rate (30d)', days: '{n} days', d_short: '{n}d',
+    fu: 'Follow-up {h}h × {m}', no_fu: 'No follow-ups', conv_next: '{p} move on', add_deal: 'Add deal',
+    drop_won: 'Mark as won', drop_lost: 'Mark as lost', moved: '{who} moved to {to}', no_stage: 'No stage',
+    th_client: 'Client', th_project: 'Project · unit', th_value: 'Value', th_stage: 'Stage', th_status: 'Status', th_owner: 'Owner', th_age: 'In stage', th_ch: 'Channel',
+    d_value: 'Deal value', d_stage: 'Stage', d_status: 'Deal status', d_details: 'Details', d_stack: 'Queued stages (stage_stack)', d_log: 'Activity log', d_raw: 'details (JSON)',
+    timeline: 'Timeline', financing: 'Financing', family: 'Household', purpose: 'Purpose',
+    open_chat: 'Open conversation', empty_stack: 'Empty — advances stop here',
+    log_ai: 'Advanced by AI', log_manual: 'Moved manually', log_created: 'Deal created from {ch}',
+    unassigned_o: 'Unassigned',
+  },
+  ar: {
+    pipeline_of: 'المسار', by_stage: 'المراحل', by_status: 'الحالة', board: 'لوحة', table: 'جدول', new_deal: 'صفقة جديدة',
+    all_projects: 'كل المشاريع', all_channels: 'كل القنوات', all_owners: 'كل المسؤولين', ai_only: 'الذكاء الاصطناعي فقط',
+    s_open: 'صفقات مفتوحة', s_value: 'قيمة المسار', s_age: 'متوسط البقاء في المرحلة', s_win: 'نسبة الإغلاق (٣٠ يوماً)', days: '{n} أيام', d_short: '{n} ي',
+    fu: 'متابعة كل {h} س × {m}', no_fu: 'بلا متابعات', conv_next: '{p} ينتقلون', add_deal: 'إضافة صفقة',
+    drop_won: 'تحديد كمباعة', drop_lost: 'تحديد كخاسرة', moved: 'نُقل {who} إلى {to}', no_stage: 'بلا مرحلة',
+    th_client: 'العميل', th_project: 'المشروع · الوحدة', th_value: 'القيمة', th_stage: 'المرحلة', th_status: 'الحالة', th_owner: 'المسؤول', th_age: 'في المرحلة', th_ch: 'القناة',
+    d_value: 'قيمة الصفقة', d_stage: 'المرحلة', d_status: 'حالة الصفقة', d_details: 'التفاصيل', d_stack: 'المراحل التالية (stage_stack)', d_log: 'سجل النشاط', d_raw: 'details (JSON)',
+    timeline: 'موعد الشراء', financing: 'التمويل', family: 'الأسرة', purpose: 'الغرض',
+    open_chat: 'فتح المحادثة', empty_stack: 'فارغ — يتوقف التقدّم هنا',
+    log_ai: 'تقدّم بواسطة الذكاء الاصطناعي', log_manual: 'نُقل يدوياً', log_created: 'أُنشئت الصفقة من {ch}',
+    unassigned_o: 'غير مُسنَدة',
+  },
+});
+
+const D = window.DATA;
+const FX = { SAR: 1, AED: 1.02, EGP: 0.077 };
+const STG = Object.fromEntries(D.stages.map((s) => [s.id, s]));
+const ORDER = ['s1', 's2', 's3', 's4', 's5'];
+const STATUSES = ['new', 'qualified', 'proposal', 'negotiation'];
+
+/* deals: the chats' deals + extra ones to fill the board */
+const extra = [
+  ['Turki Al-Shammari', 'تركي الشمري', 'whatsapp', 'sadeel', 's1', 'new', 0, '—'],
+  ['Nada Al-Rashid', 'ندى الراشد', 'instagram', 'jawharat-al-ruba', 's1', 'new', 0, '—'],
+  ['Mahmoud Saeed', 'محمود سعيد', 'phone', 'nile-view', 's2', 'new', 2400000, 'Tower C · 2BR'],
+  ['Abeer Al-Qasimi', 'عبير القاسمي', 'whatsapp', 'stax', 's2', 'qualified', 1350000, 'T1 · 1BR'],
+  ['Saud Al-Anazi', 'سعود العنزي', 'tour', 'sadeel', 's2', 'qualified', 2250000, 'Model 3'],
+  ['Rana Mostafa', 'رنا مصطفى', 'messenger', 'nile-view', 's3', 'proposal', 2800000, 'Tower A · 3BR'],
+  ['Majed Al-Subaie', 'ماجد السبيعي', 'tour', 'jawharat-al-ruba', 's3', 'qualified', 2950000, 'Villa D-02'],
+  ['Hessa Al-Kaabi', 'حصة الكعبي', 'email', 'stax', 's4', 'proposal', 2100000, 'T2-2204 · 3BR'],
+  ['Bandar Al-Harthi', 'بندر الحارثي', 'whatsapp', 'flamant', 's4', 'negotiation', 1180000, 'B2-F7-704'],
+  ['Dina Adel', 'دينا عادل', 'phone', 'nile-view', 's5', 'negotiation', 3400000, 'Penthouse B'],
+  ['Nawaf Al-Dossary', 'نواف الدوسري', 'instagram', 'sadeel', 's1', 'new', 0, '—'],
+];
+let deals = D.chats.filter((c) => c.status !== 'closed').map((c) => ({ id: 'd' + c.id, chat: c.id, name: c.name, ch: c.ch, project: c.project, stage: c.stage, ds: c.ds, value: c.budget, unit: c.unit, owner: c.assigned, ai: c.ai, hot: !c.ai && (c.priority === 'high' || c.priority === 'urgent'), age: 1 + (c.mins % 9) }))
+  .concat(extra.map((e, i) => ({ id: 'dx' + i, chat: null, name: { en: e[0], ar: e[1] }, ch: e[2], project: e[3], stage: e[4], ds: e[5], value: e[6], unit: e[7], owner: [null, 'u2', 'u3', null, 'u4'][i % 5], ai: i % 4 !== 3, hot: false, age: [0, 1, 3, 2, 6, 4, 9, 2, 5, 1, 0][i] })));
+
+const st = { group: 'stage', view: 'board', proj: '', ch: '', own: '', sortK: 'value', sortD: -1, sel: null, drag: null };
+const sar = (d) => d.value * FX[D.projects[d.project].cur];
+const visible = () => deals.filter((d) => (!st.proj || d.project === st.proj) && (!st.ch || d.ch === st.ch) && (!st.own || (st.own === 'ai' ? d.ai : d.owner === st.own)));
+
+function renderToolbar() {
+  const a = document.getElementById('agentSel');
+  a.innerHTML = D.agents.map((g) => `<option value="${g.id}">${App.L(g.name)}</option>`).join('');
+  document.getElementById('projF').innerHTML = `<option value="">${App.t('all_projects')}</option>` + Object.entries(D.projects).map(([k, p]) => `<option value="${k}" ${st.proj === k ? 'selected' : ''}>${App.L(p.name)}</option>`).join('');
+  document.getElementById('chF').innerHTML = `<option value="">${App.t('all_channels')}</option>` + ['whatsapp', 'instagram', 'telegram', 'messenger', 'phone', 'tour', 'email'].map((c) => `<option value="${c}" ${st.ch === c ? 'selected' : ''}>${App.t('ch_' + c)}</option>`).join('');
+  document.getElementById('ownF').innerHTML = `<option value="">${App.t('all_owners')}</option><option value="ai" ${st.own === 'ai' ? 'selected' : ''}>${App.t('ai_only')}</option>` + D.team.map((u) => `<option value="${u.id}" ${st.own === u.id ? 'selected' : ''}>${App.L(u.name)}</option>`).join('');
+  document.querySelectorAll('#groupSeg button').forEach((b) => { b.setAttribute('aria-pressed', b.dataset.g === st.group); b.onclick = () => { st.group = b.dataset.g; draw(); }; });
+  document.querySelectorAll('#viewSeg button').forEach((b) => { b.setAttribute('aria-pressed', b.dataset.v === st.view); b.onclick = () => { st.view = b.dataset.v; draw(); }; });
+  ['projF', 'chF', 'ownF'].forEach((id) => document.getElementById(id).onchange = (e) => { st[{ projF: 'proj', chF: 'ch', ownF: 'own' }[id]] = e.target.value; draw(); });
+  document.getElementById('newDeal').onclick = () => App.toast(App.t('new_deal') + ' → POST /tenants/{tid}/deals/');
+}
+
+function renderSummary() {
+  const v = visible();
+  const total = v.reduce((s, d) => s + sar(d), 0);
+  const items = [
+    { ico: 'briefcase-business', l: 's_open', v: App.n(v.length) },
+    { ico: 'wallet', l: 's_value', v: App.money(total) },
+    { ico: 'hourglass', l: 's_age', v: App.t('days').replace('{n}', App.n(3.4, { maximumFractionDigits: 1 })) },
+    { ico: 'trophy', l: 's_win', v: App.pct(0.284, 1) },
+  ];
+  document.getElementById('summary').innerHTML = items.map((i) => `<div class="card sum"><span class="s-ico"><i data-lucide="${i.ico}"></i></span><div><div class="s-l">${App.t(i.l)}</div><div class="s-v num">${i.v}</div></div></div>`).join('');
+}
+
+function card(d) {
+  const p = D.projects[d.project], owner = D.team.find((u) => u.id === d.owner);
+  return `<article class="deal ${d.hot ? 'hot' : ''}" draggable="true" data-id="${d.id}" tabindex="0" role="button" aria-label="${App.L(d.name)}">
+    <div class="d-top">${App.chBadge(d.ch)}<span class="d-name">${App.L(d.name)}</span></div>
+    <div class="d-sub">${App.L(p.name)} · ${d.unit}</div>
+    <div class="d-val num">${d.value ? App.money(d.value, p.cur, false) : '—'}</div>
+    <div class="d-foot">
+      ${d.hot ? `<span class="badge danger"><i data-lucide="hand"></i>${App.t('needs_human')}</span>` : d.ai ? `<span class="badge ai"><i data-lucide="sparkles"></i>AI</span>` : ''}
+      ${st.group === 'stage' ? App.statusBadge(d.ds) : `<span class="badge outline">${App.L(STG[d.stage].name)}</span>`}
+      <span class="age ${d.age >= 5 ? 'stale' : ''}" title="${App.t('th_age')}"><i data-lucide="clock" class="ico-sm"></i>${App.t('d_short').replace('{n}', App.n(d.age))}</span>
+      ${owner ? `<span class="avatar sm" title="${App.L(owner.name)}">${App.initials(App.L(owner.name))}</span>` : ''}
+    </div>
+  </article>`;
+}
+
+function renderBoard() {
+  const v = visible();
+  const cols = st.group === 'stage'
+    ? ORDER.map((id) => ({ id, name: App.L(STG[id].name), meta: STG[id].fu.max ? App.t('fu').replace('{h}', App.n(STG[id].fu.interval)).replace('{m}', App.n(STG[id].fu.max)) : App.t('no_fu'), items: v.filter((d) => d.stage === id) }))
+    : STATUSES.map((id) => ({ id, name: App.t('ds_' + id), meta: '', items: v.filter((d) => d.ds === id) }));
+  const max = Math.max(...cols.map((c) => c.items.length), 1);
+  document.getElementById('view').innerHTML = `<div class="board-wrap" data-api="GET /deals/ · PATCH /deals/{id} {stage_id | deal_status} · NEW activity_log entry on manual move"><div class="board">${cols.map((c, i) => {
+    const sum = c.items.reduce((s, d) => s + sar(d), 0);
+    const next = cols[i + 1];
+    return `<section class="col" data-col="${c.id}" aria-label="${c.name}">
+      <header class="col-h">
+        <div class="ct"><span class="cn">${c.name}</span><span class="cc num">${App.n(c.items.length)}</span><span class="cv num">${App.money(sum)}</span></div>
+        <div class="col-bar"><i style="width:${(c.items.length / max) * 100}%"></i></div>
+        <div class="cm">${c.meta ? `<span class="badge"><i data-lucide="alarm-clock"></i>${c.meta}</span>` : ''}${next ? `<span>${App.t('conv_next').replace('{p}', App.pct([0.58, 0.51, 0.53, 0.36][i] || 0.4))}</span>` : ''}</div>
+      </header>
+      <div class="col-b">${c.items.sort((a, b) => b.hot - a.hot || sar(b) - sar(a)).map(card).join('')}</div>
+      <button class="col-add" type="button"><i data-lucide="plus" class="ico-sm"></i>${App.t('add_deal')}</button>
+    </section>`;
+  }).join('')}</div></div>`;
+  wireDnD();
+}
+
+function renderTable() {
+  const v = visible().slice().sort((a, b) => {
+    const k = st.sortK; const A = k === 'value' ? sar(a) : k === 'name' ? App.L(a.name) : a[k]; const B = k === 'value' ? sar(b) : k === 'name' ? App.L(b.name) : b[k];
+    return (A > B ? 1 : A < B ? -1 : 0) * st.sortD;
+  });
+  const th = (k, key, cls = '') => `<th class="${cls}" aria-sort="${st.sortK === k ? (st.sortD > 0 ? 'ascending' : 'descending') : 'none'}"><button type="button" data-sort="${k}">${App.t(key)}${st.sortK === k ? `<i data-lucide="${st.sortD > 0 ? 'arrow-up' : 'arrow-down'}" class="ico-sm"></i>` : ''}</button></th>`;
+  document.getElementById('view').innerHTML = `<div class="card tbl-card"><div class="table-wrap"><table class="table">
+    <thead><tr>${th('name', 'th_client')}<th>${App.t('th_project')}</th>${th('value', 'th_value', 'end')}<th>${App.t('th_stage')}</th><th>${App.t('th_status')}</th><th>${App.t('th_owner')}</th>${th('age', 'th_age', 'end')}</tr></thead>
+    <tbody>${v.map((d) => { const p = D.projects[d.project], o = D.team.find((u) => u.id === d.owner); return `
+      <tr data-id="${d.id}" style="cursor:pointer">
+        <td><div class="who">${App.chBadge(d.ch)}<div style="min-width:0"><div class="name">${App.L(d.name)}</div>${d.hot ? `<div class="meta" style="color:var(--danger)">${App.t('needs_human')}</div>` : ''}</div></div></td>
+        <td>${App.L(p.name)} <span class="muted">· ${d.unit}</span></td>
+        <td class="end num">${d.value ? App.money(d.value, p.cur, false) : '—'}</td>
+        <td>${App.L(STG[d.stage].name)}</td><td>${App.statusBadge(d.ds)}</td>
+        <td>${o ? App.L(o.name) : d.ai ? `<span class="badge ai"><i data-lucide="sparkles"></i>AI</span>` : `<span class="muted">${App.t('unassigned_o')}</span>`}</td>
+        <td class="end num">${App.t('d_short').replace('{n}', App.n(d.age))}</td></tr>`; }).join('')}</tbody></table></div></div>`;
+  document.querySelectorAll('[data-sort]').forEach((b) => b.onclick = () => { st.sortD = st.sortK === b.dataset.sort ? -st.sortD : -1; st.sortK = b.dataset.sort; draw(); });
+  document.querySelectorAll('tbody tr[data-id]').forEach((r) => r.onclick = () => openDeal(r.dataset.id));
+}
+
+function moveDeal(id, target) {
+  const d = deals.find((x) => x.id === id); if (!d) return;
+  let to;
+  if (target === 'won' || target === 'lost') { d.ds = target; deals = deals.filter((x) => x.id !== id); to = App.t('ds_' + target); }
+  else if (st.group === 'stage') { d.stage = target; d.age = 0; to = App.L(STG[target].name); }
+  else { d.ds = target; to = App.t('ds_' + target); }
+  App.toast(App.t('moved').replace('{who}', App.L(d.name)).replace('{to}', to));
+  draw();
+}
+
+function wireDnD() {
+  const bar = document.getElementById('dropbar');
+  document.querySelectorAll('.deal').forEach((el) => {
+    el.addEventListener('dragstart', (e) => { st.drag = el.dataset.id; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', el.dataset.id); bar.classList.add('show'); });
+    el.addEventListener('dragend', () => { el.classList.remove('dragging'); bar.classList.remove('show'); document.querySelectorAll('.over').forEach((o) => o.classList.remove('over')); });
+    el.addEventListener('click', () => openDeal(el.dataset.id));
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDeal(el.dataset.id); } });
+  });
+  document.querySelectorAll('[data-col], [data-drop]').forEach((z) => {
+    z.ondragover = (e) => { e.preventDefault(); z.classList.add('over'); };
+    z.ondragleave = (e) => { if (!z.contains(e.relatedTarget)) z.classList.remove('over'); };
+    z.ondrop = (e) => { e.preventDefault(); z.classList.remove('over'); bar.classList.remove('show'); moveDeal(e.dataTransfer.getData('text/plain'), z.dataset.col || z.dataset.drop); };
+  });
+}
+
+function openDeal(id) {
+  const d = deals.find((x) => x.id === id); if (!d) return;
+  st.sel = id;
+  const p = D.projects[d.project];
+  const i = ORDER.indexOf(d.stage);
+  const stack = ORDER.slice(i + 1, i + 3);
+  const details = { project: d.project, unit: d.unit, budget: d.value, currency: p.cur, timeline: '3-6 months', financing: p.cc === 'SA' ? 'mortgage + MOH' : 'installments', household: 7, purpose: 'residence' };
+  const dr = document.getElementById('drawer');
+  dr.innerHTML = `
+    <div class="drawer-h">${App.chBadge(d.ch, 'lg')}<div class="grow" style="min-width:0"><div class="dh-name" id="dTitle">${App.L(d.name)}</div><div class="muted" style="font-size:12.5px">${App.L(p.name)} · ${App.L(p.city)}</div></div>
+      <button class="icon-btn" type="button" id="dClose" aria-label="${App.t('close')}"><i data-lucide="x"></i></button></div>
+    <div class="drawer-b">
+      <div><div class="sec-t">${App.t('d_value')}</div><div class="row"><div class="big-val num grow">${d.value ? App.money(d.value, p.cur, false) : '—'}</div>${App.statusBadge(d.ds)}</div>
+        ${p.cur !== 'SAR' && d.value ? `<div class="muted num" style="font-size:12.5px">≈ ${App.money(sar(d), 'SAR', false)}</div>` : ''}</div>
+      <div class="row wrap" style="gap:var(--s3)">
+        <div class="field grow" style="min-width:160px"><label for="dStage">${App.t('d_stage')}</label>
+          <select class="select" id="dStage">${ORDER.map((s) => `<option value="${s}" ${s === d.stage ? 'selected' : ''}>${App.L(STG[s].name)}</option>`).join('')}</select></div>
+        <div class="field grow" style="min-width:160px"><label for="dStatus">${App.t('d_status')}</label>
+          <select class="select" id="dStatus">${['new', 'qualified', 'proposal', 'negotiation', 'won', 'lost'].map((s) => `<option value="${s}" ${s === d.ds ? 'selected' : ''}>${App.t('ds_' + s)}</option>`).join('')}</select></div>
+      </div>
+      <div data-api="deal.stage_stack (raw stage ids)"><div class="sec-t">${App.t('d_stack')}</div>
+        <div class="stack-q">${stack.length ? stack.map((s, k) => `${k ? '<i class="flip-rtl ico-sm muted" data-lucide="chevron-right"></i>' : ''}<span class="badge info">${App.L(STG[s].name)}</span>`).join('') : `<span class="muted">${App.t('empty_stack')}</span>`}</div></div>
+      <div data-api="deal.details (free-form JSON)"><div class="sec-t">${App.t('d_details')}</div>
+        <dl class="kv">
+          <dt>${App.t('th_project')}</dt><dd>${App.L(p.name)} · ${d.unit}</dd>
+          <dt>${App.t('timeline')}</dt><dd>${App.lang === 'ar' ? '٣–٦ أشهر' : '3–6 months'}</dd>
+          <dt>${App.t('financing')}</dt><dd>${p.cc === 'SA' ? (App.lang === 'ar' ? 'تمويل عقاري + دعم سكني' : 'Mortgage + MOH subsidy') : (App.lang === 'ar' ? 'تقسيط' : 'Installments')}</dd>
+          <dt>${App.t('family')}</dt><dd>${App.n(7)}</dd>
+        </dl>
+        <details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:12.5px">${App.t('d_raw')}</summary><div class="json" style="margin-top:8px">${App.esc(JSON.stringify(details, null, 2))}</div></details>
+      </div>
+      <div data-api="deal.activity_log[]"><div class="sec-t">${App.t('d_log')}</div>
+        <ul class="log">
+          ${ORDER.slice(1, i + 1).reverse().map((s, k) => `<li><span class="li-ico ai"><i data-lucide="sparkles"></i></span><div><div>${App.L(STG[ORDER[ORDER.indexOf(s) - 1]].name)} → <b>${App.L(STG[s].name)}</b></div><div class="li-m">${App.t('log_ai')} · reason: ai_advance · ${App.ago((k + 1) * 900 + d.age * 1440)}</div></div></li>`).join('')}
+          <li><span class="li-ico"><i data-lucide="plus"></i></span><div><div>${App.t('log_created').replace('{ch}', App.t('ch_' + d.ch))}</div><div class="li-m">${App.ago((i + 2) * 1000 + d.age * 1440)}</div></div></li>
+        </ul></div>
+    </div>
+    <div class="drawer-f">
+      ${d.chat ? `<a class="btn" href="inbox.html?chat=${d.chat}"><i data-lucide="messages-square"></i>${App.t('open_chat')}</a>` : ''}
+      <button class="btn primary" type="button" id="dSave">${App.t('save')}</button>
+    </div>`;
+  document.getElementById('scrim').classList.add('open'); dr.classList.add('open');
+  App.icons();
+  document.getElementById('dClose').onclick = closeDeal; document.getElementById('dClose').focus();
+  document.getElementById('dSave').onclick = () => {
+    const ns = document.getElementById('dStage').value, nd = document.getElementById('dStatus').value;
+    if (nd === 'won' || nd === 'lost') moveDeal(d.id, nd); else { if (ns !== d.stage) d.age = 0; d.stage = ns; d.ds = nd; App.toast(App.t('saved') || 'Saved'); draw(); }
+    closeDeal();
+  };
+}
+function closeDeal() { document.getElementById('drawer').classList.remove('open'); document.getElementById('scrim').classList.remove('open'); }
+document.getElementById('scrim').onclick = closeDeal;
+document.addEventListener('app:escape', closeDeal);
+
+function draw() { renderToolbar(); renderSummary(); st.view === 'board' ? renderBoard() : renderTable(); App.icons(); }
+App.extend({ en: { saved: 'Saved' }, ar: { saved: 'تم الحفظ' } });
+App.onRender(draw);
+App.init('pipeline');
+</script>
+</body>
+</html>

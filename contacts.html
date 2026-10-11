@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contacts · VOOM Sales</title>
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .head { display: flex; align-items: flex-end; gap: var(--s4); flex-wrap: wrap; }
+  .head h1 { font-size: 22px; }
+  .head .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .head .tools { margin-inline-start: auto; display: flex; gap: var(--s2); flex-wrap: wrap; }
+
+  .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s4); }
+  .sum { padding: var(--s3) var(--s4); display: flex; align-items: center; gap: var(--s3); }
+  .sum .s-ico { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand-ink); flex-shrink: 0; }
+  .sum .s-l { font-size: 12.5px; color: var(--muted); }
+  .sum .s-v { font-size: 20px; font-weight: 600; line-height: 1.2; }
+
+  .filters { display: flex; flex-direction: column; gap: var(--s3); padding: var(--s4) var(--s5); border-bottom: 1px solid var(--border); }
+  .filters .f-row { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+  .filters .search-in { position: relative; flex: 1; min-width: 220px; max-width: 380px; }
+  .filters .search-in svg { position: absolute; top: 50%; inset-inline-start: 10px; transform: translateY(-50%); color: var(--muted); width: 16px; height: 16px; }
+  .filters .search-in .input { padding-inline-start: 34px; }
+  .filters .select { width: auto; min-width: 150px; }
+  .tag-lbl { font-size: 12px; color: var(--muted); margin-inline-end: 2px; }
+
+  .bulk { display: none; align-items: center; gap: var(--s2); padding: 10px var(--s5); background: var(--brand-soft); border-bottom: 1px solid color-mix(in srgb, var(--brand) 25%, transparent); flex-wrap: wrap; }
+  .bulk.show { display: flex; }
+  .bulk .b-n { font-weight: 600; color: var(--brand-ink); margin-inline-end: var(--s2); }
+
+  .table th button { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .table th button:focus-visible { box-shadow: var(--ring); border-radius: 4px; }
+  .table th button svg.lucide { width: 13px; height: 13px; opacity: .45; }
+  .table th[aria-sort="ascending"] button svg.lucide, .table th[aria-sort="descending"] button svg.lucide { opacity: 1; color: var(--brand-ink); }
+  .table td.chk, .table th.chk { width: 44px; padding-inline-end: 0; }
+  .table input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--brand); cursor: pointer; }
+  .table tbody tr { cursor: pointer; }
+  .table tbody tr.sel { background: color-mix(in srgb, var(--brand-soft) 60%, transparent); }
+  .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tags .badge { height: 22px; font-size: 11.5px; }
+  .chs { display: flex; gap: 3px; }
+  .stage { font-size: 12.5px; color: var(--text-2); white-space: nowrap; }
+
+  .pager { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+  .pager .spacer { flex: 1; }
+
+  /* drawer */
+  .drawer { width: min(560px, 100%); }
+  .dh-name { font-size: 17px; font-weight: 600; }
+  .quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s2); }
+  .quick .btn { height: 44px; }
+  .sec-t { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin-bottom: var(--s2); }
+  [lang="ar"] .sec-t { text-transform: none; letter-spacing: 0; font-size: 13px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3) var(--s4); }
+  .form-grid .full { grid-column: 1 / -1; }
+  .req { color: var(--danger); margin-inline-start: 2px; }
+  .err { font-size: 12px; color: var(--danger); display: none; align-items: center; gap: 4px; }
+  .field.invalid .input { border-color: var(--danger); }
+  .field.invalid .err { display: flex; }
+  .tag-edit { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-height: 40px; border: 1px solid var(--border-strong); border-radius: var(--r-sm); padding: 5px 8px; background: var(--surface); }
+  .tag-edit .badge button { all: unset; cursor: pointer; display: inline-grid; place-items: center; border-radius: 50%; width: 16px; height: 16px; }
+  .tag-edit .badge button:focus-visible { box-shadow: var(--ring); }
+  .tag-edit input { border: 0; outline: none; background: transparent; flex: 1; min-width: 90px; height: 28px; }
+  .links { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+  .link-row { display: flex; align-items: center; gap: var(--s3); padding: 10px var(--s3); border-bottom: 1px solid var(--border); color: inherit; }
+  .link-row:last-child { border-bottom: 0; }
+  .link-row:hover { background: var(--surface-2); text-decoration: none; }
+  .link-row .lr-m { font-size: 12px; color: var(--muted); }
+  .link-row .lr-end { margin-inline-start: auto; display: flex; align-items: center; gap: 6px; }
+  .log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .log li { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 10px; font-size: 13px; }
+  .log .li-ico { width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; color: var(--text-2); }
+  .log .li-ico.ai { background: var(--brand-soft); color: var(--brand-ink); }
+  .log .li-ico svg { width: 14px; height: 14px; }
+  .log .li-m { font-size: 11.5px; color: var(--muted); }
+  .drawer-f .danger-slot { margin-inline-end: auto; }
+
+  /* confirm dialog */
+  .modal { position: fixed; inset: 0; display: none; place-items: center; z-index: 80; padding: var(--s4); }
+  .modal.open { display: grid; }
+  .modal .m-card { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-3); width: min(420px, 100%); padding: var(--s5); display: flex; flex-direction: column; gap: var(--s3); }
+  .modal .m-ico { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--danger-soft); color: var(--danger); }
+  .modal .m-acts { display: flex; justify-content: flex-end; gap: var(--s2); margin-top: var(--s2); }
+  .btn.danger-solid { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+  @media (max-width: 1320px) { .col-created, .col-stage { display: none; } }
+  @media (max-width: 1080px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } .col-tags { display: none; } }
+  @media (max-width: 720px) { .col-owner, .col-proj, .col-ai { display: none; } .filters { padding: var(--s3) var(--s4); } .filters .search-in { max-width: none; } .form-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 520px) { .summary { grid-template-columns: minmax(0, 1fr); } .col-ch { display: none; } .head .tools .btn span { display: none; } }
+</style>
+</head>
+<body data-title="nav_contacts">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main class="content" id="content">
+
+      <section class="head">
+        <div><h1 data-i18n="c_title"></h1><p class="sub" id="cSub"></p></div>
+        <div class="tools">
+          <button class="btn gap" type="button" data-api="NEW POST /contacts/import (CSV)" id="importBtn"><i data-lucide="upload"></i><span data-i18n="import"></span></button>
+          <button class="btn gap" type="button" data-api="NEW GET /contacts/export.csv" id="exportBtn"><i data-lucide="download"></i><span data-i18n="export"></span></button>
+          <button class="btn primary" type="button" id="addBtn" data-api="POST /tenants/{tid}/contacts/"><i data-lucide="user-plus"></i><span data-i18n="add_contact"></span></button>
+        </div>
+      </section>
+
+      <div class="api-legend row wrap" style="font-size:12px">
+        <span class="badge info"><i data-lucide="plug"></i><span data-i18n="api_legend_ok"></span></span>
+        <span class="badge warn"><i data-lucide="triangle-alert"></i><span data-i18n="api_legend_gap"></span></span>
+      </div>
+
+      <section class="summary" id="summary" data-api="GET /contacts/ + chats + deals (client join)"></section>
+
+      <section class="card" style="overflow:hidden">
+        <div class="filters">
+          <div class="f-row">
+            <label class="search-in"><i data-lucide="search"></i><span class="sr-only" data-i18n="search_c"></span>
+              <input class="input" type="search" id="q" data-i18n-ph="search_c" autocomplete="off"></label>
+            <div class="seg" role="group" id="segF" aria-label="Filter"></div>
+            <select class="select" id="projF" data-i18n-label="all_projects"></select>
+            <select class="select" id="chF" data-i18n-label="all_channels"></select>
+          </div>
+          <div class="f-row gap" id="tagF" data-api="NEW server-side filter ?tag= (client filter today)"></div>
+        </div>
+        <div class="bulk" id="bulk" role="region" aria-live="polite"></div>
+        <div class="table-wrap" data-api="GET /tenants/{tid}/contacts/?limit=&offset= (OffsetPage)">
+          <table class="table" id="tbl"></table>
+        </div>
+        <div class="pager" id="pager"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle"></aside>
+<div class="modal" id="confirm" role="alertdialog" aria-modal="true" aria-labelledby="cfT" aria-describedby="cfB">
+  <div class="m-card">
+    <div class="m-ico"><i data-lucide="trash-2"></i></div>
+    <h3 id="cfT"></h3><p class="muted" id="cfB" style="font-size:13.5px"></p>
+    <div class="m-acts"><button class="btn" type="button" id="cfNo"></button><button class="btn danger-solid" type="button" id="cfYes"></button></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+App.extend({
+  en: {
+    c_title: 'Contacts', c_sub: '{n} people across all projects · synced from every channel',
+    import: 'Import CSV', export: 'Export', add_contact: 'Add contact', search_c: 'Search name, phone, email…',
+    all_projects: 'All projects', all_channels: 'All channels', tags_l: 'Tags:',
+    f_all: 'All', f_open: 'Open deal', f_human: 'Needs human', f_won: 'Customers',
+    s_total: 'Total contacts', s_new: 'New this week', s_open: 'With an open deal', s_won: 'Customers (won)',
+    th_contact: 'Contact', th_ch: 'Channels', th_proj: 'Project', th_deal: 'Deal', th_stage: 'Stage', th_owner: 'Owner', th_tags: 'Tags', th_ai: 'Handled by', th_last: 'Last activity', th_created: 'Added',
+    sel_n: '{n} selected', b_tag: 'Add tag', b_assign: 'Assign owner', b_export: 'Export', b_delete: 'Delete', b_clear: 'Clear',
+    select_all: 'Select all on this page', select_row: 'Select {name}',
+    pg: '{a}–{b} of {n}', prev: 'Previous page', next: 'Next page', per: 'Rows per page',
+    empty_t: 'No contacts match these filters', empty_b: 'Try another search, or clear the filters.', clear_f: 'Clear filters',
+    q_chat: 'Open chat', q_call: 'Call', q_wa: 'WhatsApp',
+    sec_profile: 'Profile', sec_extra: 'Qualification (contact.extra)', sec_deals: 'Deals', sec_convs: 'Conversations', sec_log: 'Activity',
+    f_name: 'Full name', f_phone: 'Phone', f_email: 'Email', f_tags: 'Tags', f_tag_ph: 'Type a tag and press Enter', f_lang: 'Preferred language',
+    f_budget: 'Budget', f_unit: 'Interested in', f_nat: 'Nationality', f_moh: 'Eligible for MOH housing support', f_src: 'First source',
+    err_name: 'Enter a name so your team can recognise this contact.', err_phone: 'Enter the phone with country code, e.g. +966 5X XXX XXXX.',
+    err_email: 'This email is missing an @ — check it or leave it empty.',
+    help_phone: 'International format. Used to match WhatsApp and phone calls.',
+    new_contact: 'New contact', saved: 'Contact saved', created: 'Contact added', deleted: '{n} contact(s) deleted', undo: 'Undo',
+    del_t: 'Delete {n} contact(s)?', del_b: 'Their chats and deals stay, but lose the link to this person. This can’t be undone after 10 seconds.',
+    del_yes: 'Delete', no_deals: 'No deals yet', no_convs: 'No conversations yet',
+    log_created: 'Contact created from {ch}', log_tag: 'Tag “{t}” added by {u}', log_stage: 'Moved to {s}', log_ai: 'AI captured budget & timeline',
+    lang_ar: 'Arabic', lang_en: 'English', yes: 'Yes', no: 'No', tag_added: 'Tag added to {n} contact(s)', assigned: 'Assigned to {u}',
+    exported: 'Export started — you’ll get a CSV by email', unassigned_o: 'Unassigned',
+  },
+  ar: {
+    c_title: 'العملاء', c_sub: '{n} شخصاً في كل المشاريع · من جميع القنوات',
+    import: 'استيراد CSV', export: 'تصدير', add_contact: 'إضافة عميل', search_c: 'ابحث بالاسم أو الجوال أو البريد…',
+    all_projects: 'كل المشاريع', all_channels: 'كل القنوات', tags_l: 'الوسوم:',
+    f_all: 'الكل', f_open: 'صفقة مفتوحة', f_human: 'يحتاج موظف', f_won: 'عملاء فعليون',
+    s_total: 'إجمالي العملاء', s_new: 'جدد هذا الأسبوع', s_open: 'لديهم صفقة مفتوحة', s_won: 'اشتروا فعلاً',
+    th_contact: 'العميل', th_ch: 'القنوات', th_proj: 'المشروع', th_deal: 'الصفقة', th_stage: 'المرحلة', th_owner: 'المسؤول', th_tags: 'الوسوم', th_ai: 'يتولاه', th_last: 'آخر نشاط', th_created: 'أُضيف',
+    sel_n: 'تم تحديد {n}', b_tag: 'إضافة وسم', b_assign: 'تعيين مسؤول', b_export: 'تصدير', b_delete: 'حذف', b_clear: 'إلغاء التحديد',
+    select_all: 'تحديد كل ما في الصفحة', select_row: 'تحديد {name}',
+    pg: '{a}–{b} من {n}', prev: 'الصفحة السابقة', next: 'الصفحة التالية', per: 'عدد الصفوف',
+    empty_t: 'لا يوجد عملاء بهذه الفلاتر', empty_b: 'جرّب بحثاً آخر أو امسح الفلاتر.', clear_f: 'مسح الفلاتر',
+    q_chat: 'فتح المحادثة', q_call: 'اتصال', q_wa: 'واتساب',
+    sec_profile: 'البيانات الأساسية', sec_extra: 'بيانات التأهيل (contact.extra)', sec_deals: 'الصفقات', sec_convs: 'المحادثات', sec_log: 'النشاط',
+    f_name: 'الاسم الكامل', f_phone: 'الجوال', f_email: 'البريد الإلكتروني', f_tags: 'الوسوم', f_tag_ph: 'اكتب وسماً واضغط Enter', f_lang: 'اللغة المفضلة',
+    f_budget: 'الميزانية', f_unit: 'مهتم بـ', f_nat: 'الجنسية', f_moh: 'مؤهل للدعم السكني (سكني)', f_src: 'أول قناة تواصل',
+    err_name: 'أدخل الاسم ليتعرف فريقك على العميل.', err_phone: 'أدخل الرقم مع رمز الدولة، مثل ‎+966 5X XXX XXXX.',
+    err_email: 'البريد ينقصه @ — راجعه أو اتركه فارغاً.',
+    help_phone: 'بالصيغة الدولية، ويُستخدم لربط واتساب والمكالمات.',
+    new_contact: 'عميل جديد', saved: 'تم حفظ العميل', created: 'تمت إضافة العميل', deleted: 'تم حذف {n} عميل', undo: 'تراجع',
+    del_t: 'حذف {n} عميل؟', del_b: 'ستبقى المحادثات والصفقات لكنها ستفقد الربط بهذا الشخص. لا يمكن التراجع بعد ١٠ ثوانٍ.',
+    del_yes: 'حذف', no_deals: 'لا توجد صفقات بعد', no_convs: 'لا توجد محادثات بعد',
+    log_created: 'أُنشئ العميل من {ch}', log_tag: 'أضاف {u} الوسم «{t}»', log_stage: 'انتقل إلى {s}', log_ai: 'سجّل الذكاء الاصطناعي الميزانية والتوقيت',
+    lang_ar: 'العربية', lang_en: 'الإنجليزية', yes: 'نعم', no: 'لا', tag_added: 'أُضيف الوسم إلى {n} عميل', assigned: 'تم التعيين إلى {u}',
+    exported: 'بدأ التصدير — سيصلك ملف CSV على البريد', unassigned_o: 'غير مُسنَد',
+  },
+});
+
+const D = window.DATA;
+const N = (en, ar) => ({ en, ar });
+const TAGS = {
+  vip: N('VIP', 'كبار العملاء'), investor: N('Investor', 'مستثمر'), moh: N('MOH eligible', 'مؤهل سكني'),
+  cash: N('Cash buyer', 'دفع نقدي'), expat: N('Expat', 'مقيم'), family: N('Big family', 'عائلة كبيرة'),
+};
+const TAG_KEYS = Object.keys(TAGS);
+const tagsFor = { c1: ['vip', 'moh'], c2: ['family'], c3: ['investor'], c4: ['expat', 'cash'], c6: ['moh'], c9: ['vip', 'cash'], c11: ['investor'], c12: ['moh', 'family'], c13: ['vip'], c14: ['cash'] };
+const email = (en) => en.toLowerCase().replace(/^al-/, '').replace(/[^a-z ]/g, '').trim().replace(/\s+/, '.').replace(/\s+/g, '') + '@gmail.com';
+
+/* contacts = unique people from chats + a few without a chat yet (contact-only rows) */
+let contacts = D.chats.map((c, i) => ({
+  id: 'k' + (i + 1), chat: c.id, name: c.name, phone: c.phone, email: i % 3 === 1 ? '' : email(c.name.en),
+  chs: [c.ch].concat(i % 4 === 0 ? ['phone'] : []), project: c.project, ds: c.ds, stage: c.stage, owner: c.assigned,
+  tags: tagsFor[c.id] || [], ai: c.ai, mins: c.mins, created: 2 + i * 3, lang: c.lang,
+  extra: { budget: c.budget, unit: c.unit, nat: c.phone.startsWith('+20') ? 'EG' : c.phone.startsWith('+971') ? 'AE' : 'SA', moh: (tagsFor[c.id] || []).includes('moh'), src: c.ch },
+  human: !c.ai && c.status !== 'closed' && (c.priority === 'high' || c.priority === 'urgent'),
+}));
+contacts = contacts.concat([
+  { name: N('Turki Al-Subaie', 'تركي السبيعي'), phone: '+966 55 310 7742', ch: 'tour', project: 'sadeel', tags: ['investor'], mins: 4300, created: 12 },
+  { name: N('Aisha Al-Amri', 'عائشة العامري'), phone: '+971 56 201 9934', ch: 'instagram', project: 'stax', tags: ['expat'], mins: 520, created: 1 },
+  { name: N('Mostafa Ragab', 'مصطفى رجب'), phone: '+20 10 9981 2210', ch: 'phone', project: 'nile-view', tags: [], mins: 8600, created: 33 },
+  { name: N('Nawaf Al-Harthi', 'نواف الحارثي'), phone: '+966 50 118 4096', ch: 'whatsapp', project: 'jawharat-al-ruba', tags: ['family', 'moh'], mins: 1500, created: 4 },
+  { name: N('Dana Al-Khaldi', 'دانة الخالدي'), phone: '+966 54 772 0310', ch: 'telegram', project: 'flamant', tags: ['cash'], mins: 11200, created: 51 },
+  { name: N('Ibrahim Sadek', 'إبراهيم صادق'), phone: '+20 11 3040 5581', ch: 'messenger', project: 'nile-view', tags: [], mins: 260, created: 0 },
+].map((x, j) => ({ id: 'k' + (15 + j), chat: null, name: x.name, phone: x.phone, email: j % 2 ? '' : email(x.name.en), chs: [x.ch], project: x.project,
+  ds: null, stage: null, owner: null, tags: x.tags, ai: true, mins: x.mins, created: x.created, lang: 'ar', human: false,
+  extra: { budget: 0, unit: '', nat: x.phone.startsWith('+20') ? 'EG' : x.phone.startsWith('+971') ? 'AE' : 'SA', moh: x.tags.includes('moh'), src: x.ch } })));
+
+const CHS = ['whatsapp', 'instagram', 'telegram', 'messenger', 'phone', 'tour', 'email', 'discord'];
+const qs = new URLSearchParams(location.search);
+const st = { q: '', f: 'all', proj: '', ch: '', tag: '', sort: 'last', dir: 'asc', sel: new Set(), page: 0, per: 10, open: qs.get('contact') };
+const owner = (id) => D.team.find((u) => u.id === id);
+const setUrl = (u) => { try { history.replaceState(null, '', u); } catch (e) { /* file:// blocks history edits */ } };
+const nameOf = (c) => App.L(c.name);
+
+function filtered() {
+  const q = st.q.trim().toLowerCase();
+  let list = contacts.filter((c) =>
+    (!q || [c.name.en, c.name.ar, c.phone.replace(/\s/g, ''), c.email].some((v) => v && v.toLowerCase().includes(q.replace(/\s/g, '')))) &&
+    (st.f === 'all' || (st.f === 'open' && c.ds && !['won', 'lost'].includes(c.ds)) || (st.f === 'human' && c.human) || (st.f === 'won' && c.ds === 'won')) &&
+    (!st.proj || c.project === st.proj) && (!st.ch || c.chs.includes(st.ch)) && (!st.tag || c.tags.includes(st.tag)));
+  const key = { name: (c) => nameOf(c), last: (c) => c.mins, created: (c) => c.created, proj: (c) => App.L(D.projects[c.project].name) }[st.sort];
+  list.sort((a, b) => { const x = key(a), y = key(b); const r = typeof x === 'string' ? x.localeCompare(y, App.locale()) : x - y; return st.dir === 'asc' ? r : -r; });
+  return list;
+}
+
+function renderHead() {
+  document.getElementById('cSub').textContent = App.t('c_sub').replace('{n}', App.n(contacts.length));
+  const s = [
+    ['users', 's_total', contacts.length], ['user-plus', 's_new', contacts.filter((c) => c.created <= 7).length],
+    ['briefcase-business', 's_open', contacts.filter((c) => c.ds && !['won', 'lost'].includes(c.ds)).length], ['trophy', 's_won', contacts.filter((c) => c.ds === 'won').length],
+  ];
+  document.getElementById('summary').innerHTML = s.map(([ico, k, v]) => `
+    <div class="card sum"><span class="s-ico"><i data-lucide="${ico}"></i></span><div><div class="s-l">${App.t(k)}</div><div class="s-v num">${App.n(v)}</div></div></div>`).join('');
+}
+
+function renderFilters() {
+  const q = document.getElementById('q'); q.value = st.q;
+  q.oninput = () => { st.q = q.value; st.page = 0; drawTable(); };
+  document.getElementById('segF').innerHTML = ['all', 'open', 'human', 'won'].map((f) => `<button type="button" data-f="${f}" aria-pressed="${st.f === f}">${App.t('f_' + f)}</button>`).join('');
+  document.querySelectorAll('#segF button').forEach((b) => b.onclick = () => { st.f = b.dataset.f; st.page = 0; renderFilters(); drawTable(); });
+  const pj = document.getElementById('projF');
+  pj.innerHTML = `<option value="">${App.t('all_projects')}</option>` + Object.entries(D.projects).map(([k, p]) => `<option value="${k}" ${st.proj === k ? 'selected' : ''}>${App.L(p.name)}</option>`).join('');
+  pj.onchange = () => { st.proj = pj.value; st.page = 0; drawTable(); };
+  const ch = document.getElementById('chF');
+  ch.innerHTML = `<option value="">${App.t('all_channels')}</option>` + CHS.map((k) => `<option value="${k}" ${st.ch === k ? 'selected' : ''}>${App.t('ch_' + k)}</option>`).join('');
+  ch.onchange = () => { st.ch = ch.value; st.page = 0; drawTable(); };
+  document.getElementById('tagF').innerHTML = `<span class="tag-lbl">${App.t('tags_l')}</span>` + TAG_KEYS.map((k) =>
+    `<button class="chip" type="button" data-tag="${k}" aria-pressed="${st.tag === k}"><i data-lucide="tag" class="ico-sm"></i>${App.L(TAGS[k])}<span class="n num">${App.n(contacts.filter((c) => c.tags.includes(k)).length)}</span></button>`).join('');
+  document.querySelectorAll('#tagF .chip').forEach((b) => b.onclick = () => { st.tag = st.tag === b.dataset.tag ? '' : b.dataset.tag; st.page = 0; renderFilters(); drawTable(); App.icons(); });
+}
+
+function th(key, label, cls = '') {
+  if (!key) return `<th class="${cls}">${label}</th>`;
+  const on = st.sort === key;
+  return `<th class="${cls}" aria-sort="${on ? (st.dir === 'asc' ? 'ascending' : 'descending') : 'none'}"><button type="button" data-sort="${key}">${label}<i data-lucide="${on ? (st.dir === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrow-up-down'}"></i></button></th>`;
+}
+
+function drawTable() {
+  const list = filtered();
+  const pages = Math.max(1, Math.ceil(list.length / st.per)); st.page = Math.min(st.page, pages - 1);
+  const rows = list.slice(st.page * st.per, st.page * st.per + st.per);
+  const allSel = rows.length && rows.every((c) => st.sel.has(c.id));
+  const tbl = document.getElementById('tbl');
+  if (!list.length) {
+    tbl.innerHTML = `<tbody><tr><td><div class="empty"><i data-lucide="search-x" style="width:32px;height:32px"></i><h3 style="margin:10px 0 4px">${App.t('empty_t')}</h3><p style="margin-bottom:14px">${App.t('empty_b')}</p><button class="btn" type="button" id="clrF">${App.t('clear_f')}</button></div></td></tr></tbody>`;
+    document.getElementById('clrF').onclick = () => { Object.assign(st, { q: '', f: 'all', proj: '', ch: '', tag: '' }); renderFilters(); drawTable(); };
+  } else {
+    tbl.innerHTML = `<thead><tr>
+      <th class="chk"><input type="checkbox" id="selAll" ${allSel ? 'checked' : ''} aria-label="${App.t('select_all')}"></th>
+      ${th('name', App.t('th_contact'))}${th('', App.t('th_ch'), 'col-ch')}${th('proj', App.t('th_proj'), 'col-proj')}${th('', App.t('th_deal'))}${th('', App.t('th_stage'), 'col-stage')}
+      ${th('', App.t('th_owner'), 'col-owner')}${th('', App.t('th_tags'), 'col-tags')}${th('', App.t('th_ai'), 'col-ai')}${th('last', App.t('th_last'), 'end')}${th('created', App.t('th_created'), 'end col-created')}
+    </tr></thead><tbody>${rows.map((c) => {
+      const o = owner(c.owner), p = D.projects[c.project], stg = D.stages.find((s) => s.id === c.stage);
+      return `<tr data-id="${c.id}" class="${st.sel.has(c.id) ? 'sel' : ''}">
+        <td class="chk"><input type="checkbox" data-sel="${c.id}" ${st.sel.has(c.id) ? 'checked' : ''} aria-label="${App.t('select_row').replace('{name}', App.esc(nameOf(c)))}"></td>
+        <td><div class="who"><span class="avatar sm">${App.initials(App.L(c.name))}</span><div style="min-width:0"><div class="name">${App.esc(nameOf(c))}</div><div class="meta ltr">${App.esc(c.phone)}</div></div></div></td>
+        <td class="col-ch"><div class="chs">${c.chs.map((k) => App.chBadge(k)).join('')}</div></td>
+        <td class="col-proj">${App.L(p.name)}</td>
+        <td>${c.ds ? App.statusBadge(c.ds) : '<span class="muted">—</span>'}</td>
+        <td class="col-stage"><span class="stage">${stg ? App.L(stg.name) : '—'}</span></td>
+        <td class="col-owner">${o ? `<span class="row" style="gap:6px"><span class="avatar sm">${App.initials(App.L(o.name))}</span>${App.L(o.name).split(' ')[0]}</span>` : `<span class="muted">${App.t('unassigned_o')}</span>`}</td>
+        <td class="col-tags"><div class="tags">${c.tags.map((t) => `<span class="badge ${t === 'vip' ? 'gold' : 'outline'}">${App.L(TAGS[t])}</span>`).join('')}</div></td>
+        <td class="col-ai">${c.human ? `<span class="badge danger"><i data-lucide="hand"></i>${App.t('needs_human')}</span>` : App.aiBadge(c.ai)}</td>
+        <td class="end muted" style="white-space:nowrap">${App.ago(c.mins)}</td>
+        <td class="end muted num col-created" style="white-space:nowrap">${App.date(new Date(Date.now() - c.created * 864e5))}</td>
+      </tr>`; }).join('')}</tbody>`;
+  }
+  tbl.querySelectorAll('[data-sort]').forEach((b) => b.onclick = () => { const k = b.dataset.sort; st.dir = st.sort === k && st.dir === 'asc' ? 'desc' : 'asc'; st.sort = k; drawTable(); });
+  const sa = document.getElementById('selAll');
+  if (sa) sa.onchange = () => { rows.forEach((c) => sa.checked ? st.sel.add(c.id) : st.sel.delete(c.id)); drawTable(); };
+  tbl.querySelectorAll('[data-sel]').forEach((cb) => { cb.onclick = (e) => e.stopPropagation(); cb.onchange = () => { cb.checked ? st.sel.add(cb.dataset.sel) : st.sel.delete(cb.dataset.sel); drawTable(); }; });
+  tbl.querySelectorAll('tbody tr[data-id]').forEach((tr) => tr.onclick = () => openContact(tr.dataset.id));
+
+  const a = list.length ? st.page * st.per + 1 : 0, b = Math.min(list.length, (st.page + 1) * st.per);
+  document.getElementById('pager').innerHTML = `
+    <label class="row" style="gap:6px">${App.t('per')}<select class="select" id="perSel" style="width:auto;height:32px">${[10, 25, 50].map((n) => `<option ${n === st.per ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+    <span class="spacer"></span><span class="num">${App.t('pg').replace('{a}', App.n(a)).replace('{b}', App.n(b)).replace('{n}', App.n(list.length))}</span>
+    <button class="icon-btn" type="button" id="pPrev" aria-label="${App.t('prev')}" ${st.page === 0 ? 'disabled' : ''}><i class="flip-rtl" data-lucide="chevron-left"></i></button>
+    <button class="icon-btn" type="button" id="pNext" aria-label="${App.t('next')}" ${st.page >= pages - 1 ? 'disabled' : ''}><i class="flip-rtl" data-lucide="chevron-right"></i></button>`;
+  document.getElementById('perSel').onchange = (e) => { st.per = +e.target.value; st.page = 0; drawTable(); };
+  document.getElementById('pPrev').onclick = () => { st.page--; drawTable(); };
+  document.getElementById('pNext').onclick = () => { st.page++; drawTable(); };
+  renderBulk(); App.icons();
+}
+
+function renderBulk() {
+  const el = document.getElementById('bulk'), n = st.sel.size;
+  el.classList.toggle('show', n > 0);
+  el.innerHTML = n ? `<span class="b-n">${App.t('sel_n').replace('{n}', App.n(n))}</span>
+    <select class="select" id="bTag" style="width:auto;height:32px" aria-label="${App.t('b_tag')}"><option value="">${App.t('b_tag')}</option>${TAG_KEYS.map((k) => `<option value="${k}">${App.L(TAGS[k])}</option>`).join('')}</select>
+    <select class="select" id="bOwn" style="width:auto;height:32px" aria-label="${App.t('b_assign')}"><option value="">${App.t('b_assign')}</option>${D.team.map((u) => `<option value="${u.id}">${App.L(u.name)}</option>`).join('')}</select>
+    <button class="btn sm" type="button" id="bExp"><i data-lucide="download" class="ico-sm"></i>${App.t('b_export')}</button>
+    <button class="btn sm danger" type="button" id="bDel"><i data-lucide="trash-2" class="ico-sm"></i>${App.t('b_delete')}</button>
+    <span class="spacer" style="flex:1"></span><button class="btn sm ghost" type="button" id="bClr">${App.t('b_clear')}</button>` : '';
+  if (!n) return;
+  document.getElementById('bTag').onchange = (e) => { const t = e.target.value; if (!t) return; contacts.forEach((c) => { if (st.sel.has(c.id) && !c.tags.includes(t)) c.tags.push(t); }); App.toast(App.t('tag_added').replace('{n}', App.n(n))); renderFilters(); drawTable(); };
+  document.getElementById('bOwn').onchange = (e) => { const u = owner(e.target.value); if (!u) return; contacts.forEach((c) => { if (st.sel.has(c.id)) c.owner = u.id; }); App.toast(App.t('assigned').replace('{u}', App.L(u.name))); drawTable(); };
+  document.getElementById('bExp').onclick = () => App.toast(App.t('exported'));
+  document.getElementById('bDel').onclick = () => confirmDelete([...st.sel]);
+  document.getElementById('bClr').onclick = () => { st.sel.clear(); drawTable(); };
+}
+
+function confirmDelete(ids) {
+  const m = document.getElementById('confirm');
+  document.getElementById('cfT').textContent = App.t('del_t').replace('{n}', App.n(ids.length));
+  document.getElementById('cfB').textContent = App.t('del_b');
+  document.getElementById('cfNo').textContent = App.t('cancel');
+  document.getElementById('cfYes').textContent = App.t('del_yes');
+  document.getElementById('scrim').classList.add('open'); m.classList.add('open'); App.icons();
+  document.getElementById('cfNo').focus();
+  const close = () => { m.classList.remove('open'); if (!document.getElementById('drawer').classList.contains('open')) document.getElementById('scrim').classList.remove('open'); };
+  document.getElementById('cfNo').onclick = close;
+  document.getElementById('cfYes').onclick = () => {
+    const removed = contacts.filter((c) => ids.includes(c.id));
+    contacts = contacts.filter((c) => !ids.includes(c.id)); ids.forEach((i) => st.sel.delete(i));
+    close(); closeContact(); renderHead(); renderFilters(); drawTable();
+    undoToast(App.t('deleted').replace('{n}', App.n(removed.length)), () => { contacts = contacts.concat(removed); renderHead(); renderFilters(); drawTable(); });
+  };
+}
+
+function undoToast(msg, onUndo) {
+  let el = document.getElementById('toast');
+  if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.style.pointerEvents = 'auto';
+  el.innerHTML = `<i data-lucide="trash-2"></i><span>${App.esc(msg)}</span><button class="btn sm" type="button" id="undoBtn" style="margin-inline-start:8px;background:transparent;color:#5ed6c4;border-color:rgba(255,255,255,.25)">${App.t('undo')}</button>`;
+  App.icons(); el.classList.add('show');
+  document.getElementById('undoBtn').onclick = () => { onUndo(); el.classList.remove('show'); el.style.pointerEvents = 'none'; };
+  clearTimeout(App._tt); App._tt = setTimeout(() => { el.classList.remove('show'); el.style.pointerEvents = 'none'; }, 10000);
+}
+
+function field(id, label, value, { type = 'text', req = false, err = '', help = '', full = false, ltr = false } = {}) {
+  return `<div class="field ${full ? 'full' : ''}" id="w-${id}"><label for="${id}">${label}${req ? '<span class="req" aria-hidden="true">*</span>' : ''}</label>
+    <input class="input ${ltr ? 'ltr' : ''}" id="${id}" type="${type}" value="${App.esc(value)}" ${req ? 'required aria-required="true"' : ''} ${err ? `aria-describedby="e-${id}${help ? ` h-${id}` : ''}"` : ''} autocomplete="${{ cName: 'name', cPhone: 'tel', cEmail: 'email' }[id] || 'off'}">
+    ${help ? `<span class="help" id="h-${id}">${help}</span>` : ''}
+    ${err ? `<span class="err" id="e-${id}" role="alert"><i data-lucide="circle-alert" class="ico-sm"></i>${err}</span>` : ''}</div>`;
+}
+
+function openContact(id) {
+  const isNew = !id; const c = isNew ? { id: null, name: N('', ''), phone: '', email: '', chs: [], project: '', ds: null, stage: null, owner: null, tags: [], ai: true, mins: 0, created: 0, lang: 'ar', extra: { budget: 0, unit: '', nat: 'SA', moh: false, src: 'whatsapp' } } : contacts.find((x) => x.id === id);
+  if (!c) return;
+  if (!isNew) setUrl(`?contact=${c.id}`);
+  const tags = [...c.tags];
+  const p = D.projects[c.project], stg = D.stages.find((s) => s.id === c.stage), chat = D.chats.find((x) => x.id === c.chat);
+  const dr = document.getElementById('drawer');
+  dr.innerHTML = `
+    <div class="drawer-h">${isNew ? '<span class="avatar"><i data-lucide="user-plus" class="ico-sm"></i></span>' : `<span class="avatar">${App.initials(App.L(c.name))}</span>`}
+      <div class="grow" style="min-width:0"><div class="dh-name" id="dTitle">${isNew ? App.t('new_contact') : App.esc(nameOf(c))}</div>
+      ${isNew ? '' : `<div class="muted" style="font-size:12.5px">${p ? `${App.L(p.name)} · ${App.L(p.city)}` : ''}</div>`}</div>
+      <button class="icon-btn" type="button" id="dClose" aria-label="${App.t('close')}"><i data-lucide="x"></i></button></div>
+    <div class="drawer-b">
+      ${isNew ? '' : `<div class="quick">
+        <a class="btn ${chat ? '' : 'is-dis'}" ${chat ? `href="inbox.html?chat=${chat.id}"` : 'aria-disabled="true"'}><i data-lucide="messages-square"></i>${App.t('q_chat')}</a>
+        <a class="btn" href="tel:${c.phone.replace(/\s/g, '')}"><i data-lucide="phone"></i>${App.t('q_call')}</a>
+        <a class="btn" href="https://wa.me/${c.phone.replace(/\D/g, '')}" target="_blank" rel="noopener"><i data-lucide="message-circle"></i>${App.t('q_wa')}</a></div>`}
+      <section data-api="PATCH /tenants/{tid}/contacts/{id} {name, phone, email, tags}"><div class="sec-t">${App.t('sec_profile')}</div>
+        <div class="form-grid">
+          ${field('cName', App.t('f_name'), nameOf(c), { req: true, err: App.t('err_name'), full: true })}
+          ${field('cPhone', App.t('f_phone'), c.phone, { type: 'tel', req: true, err: App.t('err_phone'), help: App.t('help_phone'), ltr: true })}
+          ${field('cEmail', App.t('f_email'), c.email, { type: 'email', err: App.t('err_email'), ltr: true })}
+          <div class="field full"><label for="tagIn">${App.t('f_tags')}</label><div class="tag-edit" id="tagEdit"></div></div>
+        </div></section>
+      <section class="gap" data-api="contact.extra (free-form JSON) · keys are a UI convention"><div class="sec-t">${App.t('sec_extra')}</div>
+        <div class="form-grid">
+          ${field('xBudget', App.t('f_budget'), c.extra.budget ? App.n(c.extra.budget) : '', { ltr: true })}
+          ${field('xUnit', App.t('f_unit'), c.extra.unit === '—' ? '' : c.extra.unit)}
+          <div class="field"><label for="xNat">${App.t('f_nat')}</label><select class="select" id="xNat">${[['SA', N('Saudi', 'سعودي')], ['AE', N('Emirati', 'إماراتي')], ['EG', N('Egyptian', 'مصري')], ['XX', N('Other', 'أخرى')]].map(([k, v]) => `<option value="${k}" ${c.extra.nat === k ? 'selected' : ''}>${App.L(v)}</option>`).join('')}</select></div>
+          <div class="field"><label for="xLang">${App.t('f_lang')}</label><select class="select" id="xLang"><option value="ar" ${c.lang === 'ar' ? 'selected' : ''}>${App.t('lang_ar')}</option><option value="en" ${c.lang === 'en' ? 'selected' : ''}>${App.t('lang_en')}</option></select></div>
+          <label class="switch full"><input type="checkbox" id="xMoh" ${c.extra.moh ? 'checked' : ''}><span class="track"></span>${App.t('f_moh')}</label>
+        </div></section>
+      ${isNew ? '' : `
+      <section data-api="GET /deals/?contact_id= (client filter)"><div class="sec-t">${App.t('sec_deals')}</div>
+        ${c.ds ? `<div class="links"><a class="link-row" href="pipeline.html"><span class="grow" style="min-width:0"><b>${App.L(p.name)}</b> · ${App.esc(c.extra.unit || '—')}<div class="lr-m">${stg ? App.L(stg.name) : ''}</div></span>
+          <span class="lr-end"><span class="num" style="font-weight:600">${c.extra.budget ? App.money(c.extra.budget, p.cur) : '—'}</span>${App.statusBadge(c.ds)}</span></a></div>` : `<p class="muted">${App.t('no_deals')}</p>`}</section>
+      <section data-api="GET /chats/?contact_id= (client filter)"><div class="sec-t">${App.t('sec_convs')}</div>
+        ${chat ? `<div class="links">${c.chs.map((k, i) => `<a class="link-row" href="${i === 0 ? `inbox.html?chat=${chat.id}` : 'inbox.html'}">${App.chBadge(k, 'lg')}<span class="grow" style="min-width:0"><b>${App.t('ch_' + k)}</b><div class="lr-m" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i === 0 ? App.esc(chat.preview) : '—'}</div></span><span class="lr-end muted" style="font-size:12px">${App.ago(i === 0 ? c.mins : c.mins + 2880)}</span></a>`).join('')}</div>` : `<p class="muted">${App.t('no_convs')}</p>`}</section>
+      <section class="gap" data-api="NEW GET /contacts/{id}/activity (tenant-wide feed)"><div class="sec-t">${App.t('sec_log')}</div>
+        <ul class="log">
+          ${stg ? `<li><span class="li-ico ai"><i data-lucide="sparkles"></i></span><div><div>${App.t('log_stage').replace('{s}', `<b>${App.L(stg.name)}</b>`)}</div><div class="li-m">${App.ago(c.mins + 60)}</div></div></li>
+          <li><span class="li-ico ai"><i data-lucide="wallet"></i></span><div><div>${App.t('log_ai')}</div><div class="li-m">${App.ago(c.mins + 400)}</div></div></li>` : ''}
+          ${c.tags[0] ? `<li><span class="li-ico"><i data-lucide="tag"></i></span><div><div>${App.t('log_tag').replace('{t}', App.L(TAGS[c.tags[0]])).replace('{u}', App.L(D.team[1].name))}</div><div class="li-m">${App.ago(c.mins + 900)}</div></div></li>` : ''}
+          <li><span class="li-ico"><i data-lucide="plus"></i></span><div><div>${App.t('log_created').replace('{ch}', App.t('ch_' + c.extra.src))}</div><div class="li-m">${App.date(new Date(Date.now() - c.created * 864e5), { day: 'numeric', month: 'long' })} · ${App.hijri(new Date(Date.now() - c.created * 864e5))}</div></div></li>
+        </ul></section>`}
+    </div>
+    <div class="drawer-f">
+      ${isNew ? '' : `<button class="btn danger danger-slot" type="button" id="dDel"><i data-lucide="trash-2"></i>${App.t('delete')}</button>`}
+      <button class="btn" type="button" id="dCancel">${App.t('cancel')}</button>
+      <button class="btn primary" type="button" id="dSave"><i data-lucide="check"></i>${isNew ? App.t('add_contact') : App.t('save')}</button>
+    </div>`;
+
+  const drawTags = () => {
+    const box = document.getElementById('tagEdit');
+    box.innerHTML = tags.map((t, i) => `<span class="badge ${t === 'vip' ? 'gold' : 'brand'}">${App.esc(TAGS[t] ? App.L(TAGS[t]) : t)}<button type="button" data-rm="${i}" aria-label="${App.t('delete')} ${App.esc(TAGS[t] ? App.L(TAGS[t]) : t)}"><i data-lucide="x" style="width:12px;height:12px"></i></button></span>`).join('') +
+      `<input id="tagIn" list="tagList" placeholder="${App.t('f_tag_ph')}"><datalist id="tagList">${TAG_KEYS.map((k) => `<option value="${App.L(TAGS[k])}">`).join('')}</datalist>`;
+    box.querySelectorAll('[data-rm]').forEach((b) => b.onclick = () => { tags.splice(+b.dataset.rm, 1); drawTags(); document.getElementById('tagIn').focus(); });
+    const inp = document.getElementById('tagIn');
+    inp.onkeydown = (e) => {
+      if (e.key === 'Enter' && inp.value.trim()) { e.preventDefault(); const v = inp.value.trim(); const k = TAG_KEYS.find((x) => App.L(TAGS[x]) === v || TAGS[x].en === v) || v; if (!tags.includes(k)) tags.push(k); drawTags(); document.getElementById('tagIn').focus(); }
+      if (e.key === 'Backspace' && !inp.value && tags.length) { tags.pop(); drawTags(); document.getElementById('tagIn').focus(); }
+    };
+    App.icons();
+  };
+  drawTags();
+
+  const validate = (id, ok) => { document.getElementById('w-' + id).classList.toggle('invalid', !ok); document.getElementById(id).setAttribute('aria-invalid', !ok); return ok; };
+  const rules = {
+    cName: (v) => v.trim().length > 1,
+    cPhone: (v) => /^\+\d[\d\s]{7,}$/.test(v.trim()),
+    cEmail: (v) => !v.trim() || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.trim()),
+  };
+  Object.keys(rules).forEach((id) => { document.getElementById(id).onblur = (e) => validate(id, rules[id](e.target.value)); });
+
+  document.getElementById('scrim').classList.add('open'); dr.classList.add('open'); App.icons();
+  (isNew ? document.getElementById('cName') : document.getElementById('dClose')).focus();
+  document.getElementById('dClose').onclick = closeContact;
+  document.getElementById('dCancel').onclick = closeContact;
+  if (!isNew) document.getElementById('dDel').onclick = () => confirmDelete([c.id]);
+  document.getElementById('dSave').onclick = () => {
+    const bad = Object.keys(rules).filter((id) => !validate(id, rules[id](document.getElementById(id).value)));
+    if (bad.length) { document.getElementById(bad[0]).focus(); return; }
+    const nm = document.getElementById('cName').value.trim();
+    const upd = { name: N(nm, nm), phone: document.getElementById('cPhone').value.trim(), email: document.getElementById('cEmail').value.trim(), tags: [...tags], lang: document.getElementById('xLang').value };
+    if (isNew) { contacts.unshift(Object.assign(c, upd, { id: 'k' + (contacts.length + 100), chs: ['whatsapp'], project: 'sadeel' })); App.toast(App.t('created')); }
+    else { Object.assign(c, upd, nm === nameOf(c) ? { name: c.name } : {}); App.toast(App.t('saved')); }
+    closeContact(); renderHead(); renderFilters(); drawTable();
+  };
+}
+function closeContact() {
+  document.getElementById('drawer').classList.remove('open');
+  if (!document.getElementById('confirm').classList.contains('open')) document.getElementById('scrim').classList.remove('open');
+  if (location.search.includes('contact=')) setUrl(location.pathname);
+}
+document.getElementById('scrim').onclick = () => { document.getElementById('confirm').classList.remove('open'); closeContact(); };
+document.addEventListener('app:escape', () => { const m = document.getElementById('confirm'); if (m.classList.contains('open')) { m.classList.remove('open'); if (!document.getElementById('drawer').classList.contains('open')) document.getElementById('scrim').classList.remove('open'); } else closeContact(); });
+document.getElementById('addBtn').onclick = () => openContact(null);
+document.getElementById('exportBtn').onclick = () => App.toast(App.t('exported'));
+document.getElementById('importBtn').onclick = () => App.toast(App.lang === 'ar' ? 'الاستيراد يحتاج واجهة جديدة (نموذج أولي)' : 'Import needs a new endpoint (prototype)');
+
+App.onRender(() => { renderHead(); renderFilters(); drawTable(); });
+App.init('contacts');
+if (st.open) openContact(st.open);
+</script>
+</body>
+</html>

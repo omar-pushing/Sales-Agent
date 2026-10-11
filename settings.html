@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings · VOOM Sales</title>
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .set-grid { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: var(--s6); align-items: start; }
+  .subnav { position: sticky; top: calc(var(--top-h) + var(--s5)); display: flex; flex-direction: column; gap: 2px; }
+  .subnav a { display: flex; align-items: center; gap: var(--s3); min-height: 40px; padding: 0 var(--s3); border-radius: var(--r-sm); color: var(--text-2); font-weight: 500; font-size: 13.5px; }
+  .subnav a:hover { background: var(--surface-2); text-decoration: none; color: var(--text); }
+  .subnav a[aria-current="true"] { background: var(--brand-soft); color: var(--brand-ink); }
+  .subnav a.dz { color: var(--danger); margin-top: var(--s3); border-top: 1px solid var(--border); border-radius: 0; padding-top: var(--s3); }
+  .subnav a.dz[aria-current="true"] { background: var(--danger-soft); border-radius: var(--r-sm); }
+
+  .panel { display: flex; flex-direction: column; gap: var(--s4); max-width: 880px; }
+  .panel > header h2 { font-size: 20px; }
+  .panel > header p { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
+  .form-grid .full { grid-column: 1 / -1; }
+  .req { color: var(--danger); margin-inline-start: 2px; }
+  .row-set { display: flex; align-items: flex-start; gap: var(--s4); padding: var(--s4) 0; border-bottom: 1px solid var(--border); }
+  .row-set:first-child { padding-top: 0; } .row-set:last-child { border-bottom: 0; padding-bottom: 0; }
+  .row-set .rs-t { font-weight: 500; }
+  .row-set .rs-d { font-size: 12.5px; color: var(--muted); margin-top: 2px; max-width: 520px; }
+  .row-set .rs-c { margin-inline-start: auto; flex-shrink: 0; display: flex; align-items: center; gap: var(--s2); }
+
+  .logo-up { display: flex; align-items: center; gap: var(--s4); }
+  .logo-box { width: 64px; height: 64px; border-radius: var(--r-lg); background: #d9b35b; color: #3b2a05; font-weight: 700; font-size: 22px; display: grid; place-items: center; }
+  .preview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s2); }
+  .preview div { background: var(--surface-2); border-radius: var(--r-sm); padding: 10px 12px; }
+  .preview .pl { font-size: 11.5px; color: var(--muted); }
+  .preview .pv { font-weight: 600; font-size: 14px; }
+
+  .hours { display: flex; flex-direction: column; }
+  .day { display: grid; grid-template-columns: 130px 56px minmax(0, 1fr); gap: var(--s3); align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .day:last-child { border-bottom: 0; }
+  .day .times { display: flex; align-items: center; gap: var(--s2); }
+  .day .times .input { width: 120px; height: 36px; }
+  .day.off .times { opacity: .45; }
+  .day .closed { font-size: 12.5px; color: var(--muted); }
+
+  .checks { display: flex; flex-direction: column; gap: 10px; }
+  .checks label { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; cursor: pointer; }
+  .checks input { accent-color: var(--brand); width: 18px; height: 18px; margin-top: 2px; }
+  .checks .c-d { font-size: 12px; color: var(--muted); }
+  .stepper { display: inline-flex; align-items: center; border: 1px solid var(--border-strong); border-radius: var(--r-sm); height: 40px; }
+  .stepper button { width: 40px; height: 38px; border: 0; background: transparent; color: var(--text-2); display: grid; place-items: center; }
+  .stepper input { width: 48px; text-align: center; border: 0; background: transparent; height: 38px; font-weight: 600; outline: none; }
+
+  .ntab { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .ntab th { font-size: 12px; color: var(--muted); font-weight: 500; text-align: center; padding: 0 0 10px; }
+  .ntab th:first-child { text-align: start; }
+  .ntab td { padding: 10px 0; border-top: 1px solid var(--border); }
+  .ntab td.c { text-align: center; width: 96px; }
+  .ntab .n-d { font-size: 12px; color: var(--muted); }
+
+  .copy-field { display: flex; align-items: center; gap: var(--s2); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 4px; padding-inline-start: 10px; }
+  .copy-field code { flex: 1; min-width: 0; font-size: 12.5px; direction: ltr; unicode-bidi: isolate; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .dz-card { border-color: color-mix(in srgb, var(--danger) 35%, var(--border)); }
+  .dz-card .card-h h3 { color: var(--danger); }
+  .btn.danger-solid { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+  .savebar { position: fixed; bottom: 0; inset-inline-start: var(--side-w); inset-inline-end: 0; z-index: 45; display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s6);
+    background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -8px 24px rgba(0,0,0,.08); transform: translateY(110%); transition: transform .22s var(--ease); }
+  .savebar.show { transform: translateY(0); }
+  .savebar .sb-t { display: flex; align-items: center; gap: 8px; font-weight: 500; margin-inline-end: auto; }
+  .savebar .sb-t svg { color: var(--warn); }
+  .content { padding-bottom: 96px; }
+
+  .modal { position: fixed; inset: 0; display: none; place-items: center; z-index: 80; padding: var(--s4); }
+  .modal.open { display: grid; }
+  .modal .m-card { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-3); width: min(460px, 100%); padding: var(--s5); display: flex; flex-direction: column; gap: var(--s3); }
+  .modal .m-ico { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--danger-soft); color: var(--danger); }
+  .modal .m-acts { display: flex; justify-content: flex-end; gap: var(--s2); margin-top: var(--s2); }
+
+  @media (max-width: 1080px) { .savebar { inset-inline-start: 0; padding: var(--s3) var(--s4); } }
+  @media (max-width: 960px) {
+    .set-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s4); }
+    .subnav { position: static; flex-direction: row; overflow-x: auto; scrollbar-width: none; gap: 4px; border-bottom: 1px solid var(--border); padding-bottom: var(--s2); }
+    .subnav a { white-space: nowrap; flex-shrink: 0; }
+    .subnav a.dz { margin-top: 0; border-top: 0; padding-top: 0; }
+  }
+  @media (max-width: 720px) { .form-grid { grid-template-columns: minmax(0, 1fr); } .row-set { flex-wrap: wrap; } .row-set .rs-c { margin-inline-start: 0; } .preview { grid-template-columns: minmax(0, 1fr); } .day { grid-template-columns: 90px 50px minmax(0,1fr); } .day .times .input { width: 96px; } .savebar .sb-t span { display: none; } }
+</style>
+</head>
+<body data-title="nav_settings" data-crumb="nav_config">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main class="content" id="content">
+      <div class="api-legend row wrap" style="font-size:12px">
+        <span class="badge info"><i data-lucide="plug"></i><span data-i18n="api_legend_ok"></span></span>
+        <span class="badge warn"><i data-lucide="triangle-alert"></i><span data-i18n="api_legend_gap"></span></span>
+      </div>
+      <div class="set-grid">
+        <nav class="subnav" id="subnav" aria-label="Settings sections"></nav>
+        <div id="panel" class="panel"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="savebar" id="savebar" role="region" aria-live="polite">
+  <span class="sb-t"><i data-lucide="circle-dot"></i><span data-i18n="unsaved"></span></span>
+  <button class="btn" type="button" id="discardBtn" data-i18n="discard"></button>
+  <button class="btn primary" type="button" id="saveBtn"><i data-lucide="check"></i><span data-i18n="save"></span></button>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="modal" id="confirm" role="alertdialog" aria-modal="true" aria-labelledby="cfT" aria-describedby="cfB">
+  <div class="m-card">
+    <div class="m-ico"><i data-lucide="triangle-alert"></i></div>
+    <h3 id="cfT"></h3><p class="muted" id="cfB" style="font-size:13.5px"></p>
+    <div class="field" id="cfField"><label for="cfIn" id="cfL"></label><input class="input ltr" id="cfIn" autocomplete="off"></div>
+    <div class="m-acts"><button class="btn" type="button" id="cfNo"></button><button class="btn danger-solid" type="button" id="cfYes" disabled></button></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+App.extend({
+  en: {
+    unsaved: 'You have unsaved changes', discard: 'Discard', saved: 'Settings saved', discarded: 'Changes discarded', leave_warn: 'You have unsaved changes.',
+    sec_workspace: 'Workspace', sec_locale: 'Language & region', sec_ai: 'AI behaviour', sec_notify: 'Notifications', sec_api: 'API & integrations', sec_privacy: 'Data & privacy', sec_danger: 'Danger zone',
+    d_workspace: 'How your company appears to your team and in client-facing messages.',
+    d_locale: 'Defaults for dates, numbers, currency and working hours across the dashboard and AI replies.',
+    d_ai: 'Workspace-wide defaults. Each agent can override these on its own page.',
+    d_notify: 'Choose where your team hears about things that need a human.',
+    d_api: 'Keys and endpoints used by the Message Service and your external AI agents.',
+    d_privacy: 'Retention and consent under the Saudi PDPL, UAE PDPL and Egypt Law 151/2020.',
+    d_danger: 'Actions here affect every agent, channel and team member.',
+    f_wname: 'Company name', f_wname_ar: 'Company name (Arabic)', f_slug: 'Workspace URL', f_slug_help: 'Changing it breaks existing invite links.', f_logo: 'Logo', up_logo: 'Upload logo', logo_help: 'PNG or SVG, square, at least 256 px.',
+    f_plan: 'Plan', plan_v: 'Enterprise · 3 AI agents · 10 seats', manage_plan: 'Manage plan', f_cr: 'Commercial registration (CR) no.', f_vat: 'VAT number',
+    f_ui_lang: 'Default interface language', f_digits: 'Numbers', dg_latn: 'Western (123)', dg_arab: 'Arabic-Indic (١٢٣)', f_cal: 'Calendar', cal_both: 'Gregorian + Hijri', cal_greg: 'Gregorian only', cal_hijri: 'Hijri first',
+    f_tz: 'Time zone', f_cur: 'Reporting currency', f_cur_help: 'AED and EGP deals are converted for totals. Deal amounts keep their own currency.',
+    f_week: 'Weekend', wk_fs: 'Friday – Saturday', wk_ss: 'Saturday – Sunday', wk_f: 'Friday only',
+    preview: 'Preview', pv_date: 'Date', pv_num: 'Number', pv_money: 'Amount',
+    hours_t: 'Working hours', hours_d: 'Handoffs outside these hours wait in the queue and the AI tells the client when a person will reply.',
+    closed: 'Closed', to: 'to', prayer_t: 'Pause follow-ups during prayer times', prayer_d: 'Uses the city of each project (Makkah, Riyadh, Al Khobar, Dubai, Benha).',
+    ramadan_t: 'Ramadan hours', ramadan_d: 'Switch to 20:00–02:00 automatically during Ramadan.',
+    ai_lang: 'Default reply language', al_auto: 'Match the client', al_sa: 'Arabic · Saudi', al_eg: 'Arabic · Egyptian', al_en: 'English',
+    ai_disclose: 'Tell clients they are talking to an AI', ai_disclose_d: 'Adds a short line to the first reply. Recommended.',
+    ai_fu: 'Maximum follow-ups before pausing', ai_fu_d: 'After this many unanswered follow-ups the AI stops and hands over.',
+    ai_quiet: 'Quiet hours', ai_quiet_d: 'No proactive messages in this window (the client’s local time).',
+    ai_handoff: 'Hand over to a human when…', h_ask: 'The client asks for a person', h_pay: 'The client is ready to pay a deposit or sign', h_neg: 'The client is upset or complains', h_price: 'The client negotiates a price below the floor', h_vip: 'The contact is tagged VIP',
+    ai_price: 'Share prices without checking inventory', ai_price_d: 'Off keeps the “search units before any price” rule.',
+    n_event: 'Event', n_app: 'In-app', n_email: 'Email', n_wa: 'WhatsApp',
+    ne_human: 'A chat needs a human', ne_human_d: 'AI paused or client asked for a person', ne_won: 'A deal is marked won', ne_visit: 'A site visit is booked', ne_down: 'A channel stops working', ne_digest: 'Daily summary', ne_digest_d: 'Sent 08:00 in the workspace time zone',
+    k_webhook: 'Tenant webhook key', k_webhook_d: 'tenant.settings.webhook_api_key. The Message Service sends it with every inbound message.',
+    k_ai: 'AI callback key', k_ai_d: 'Used by AI agents to post replies to /callbacks/ai/{tenant_id}.',
+    k_ext: 'Default external AI endpoint', k_ext_d: 'Fallback when an agent has no settings.external_endpoint.',
+    k_rotate: 'Rotate', k_reveal: 'Show', k_hide: 'Hide', k_copy: 'Copy', copied: 'Copied', rotated: 'Key rotated — update the Message Service within 10 minutes',
+    k_docs: 'Open API docs', k_last: 'Last used {t}',
+    p_ret: 'Keep conversations for', p_ret_d: 'Older messages are deleted. Deals and contacts stay.', r_6: '6 months', r_12: '12 months', r_24: '24 months', r_inf: 'Forever',
+    p_consent: 'Consent message', p_consent_d: 'Sent before the AI collects personal data on a new channel.',
+    p_mask: 'Mask national ID and IBAN in chats', p_mask_d: 'Numbers are hidden from staff and never sent to the AI model.',
+    p_export: 'Export all workspace data', p_export_d: 'A ZIP of contacts, deals and messages, emailed to admins.', p_export_b: 'Request export', exp_toast: 'Export requested — admins get an email when it’s ready',
+    dz_suspend: 'Pause all AI agents', dz_suspend_d: 'Every channel keeps receiving messages but nobody replies automatically.', dz_suspend_b: 'Pause AI',
+    dz_delete: 'Delete workspace', dz_delete_d: 'Permanently deletes agents, channels, contacts, deals and messages after 30 days.', dz_delete_b: 'Delete workspace',
+    cf_pause_t: 'Pause all AI agents?', cf_pause_b: 'Clients will stop getting replies until you resume. Human replies still work.', cf_pause_y: 'Pause AI',
+    cf_del_t: 'Delete Al Ruba Developments?', cf_del_b: 'This schedules deletion in 30 days. Type the workspace URL to confirm.', cf_del_l: 'Type {s} to confirm', cf_del_y: 'Delete workspace',
+    paused: 'All AI agents paused', del_sched: 'Deletion scheduled for {d}',
+    days_sun: 'Sunday', days_mon: 'Monday', days_tue: 'Tuesday', days_wed: 'Wednesday', days_thu: 'Thursday', days_fri: 'Friday', days_sat: 'Saturday', open_l: 'Open on {d}',
+    err_name: 'Enter the company name clients should see.',
+  },
+  ar: {
+    unsaved: 'لديك تغييرات غير محفوظة', discard: 'تجاهل', saved: 'تم حفظ الإعدادات', discarded: 'تم تجاهل التغييرات', leave_warn: 'لديك تغييرات غير محفوظة.',
+    sec_workspace: 'مساحة العمل', sec_locale: 'اللغة والمنطقة', sec_ai: 'سلوك الذكاء الاصطناعي', sec_notify: 'الإشعارات', sec_api: 'الواجهات والتكامل', sec_privacy: 'البيانات والخصوصية', sec_danger: 'منطقة الخطر',
+    d_workspace: 'كيف تظهر منشأتك لفريقك وفي الرسائل الموجهة للعملاء.',
+    d_locale: 'الإعدادات الافتراضية للتواريخ والأرقام والعملة وأوقات العمل في اللوحة وردود الذكاء الاصطناعي.',
+    d_ai: 'إعدادات عامة لمساحة العمل، ويمكن لكل وكيل تجاوزها من صفحته.',
+    d_notify: 'اختر كيف يعرف فريقك بما يحتاج تدخّل موظف.',
+    d_api: 'المفاتيح والروابط التي تستخدمها خدمة المراسلة ووكلاء الذكاء الاصطناعي الخارجيون.',
+    d_privacy: 'الاحتفاظ بالبيانات والموافقة وفق نظام حماية البيانات الشخصية السعودي والإماراتي وقانون ١٥١ لسنة ٢٠٢٠ المصري.',
+    d_danger: 'الإجراءات هنا تؤثر على كل الوكلاء والقنوات وأعضاء الفريق.',
+    f_wname: 'اسم المنشأة', f_wname_ar: 'اسم المنشأة (بالعربية)', f_slug: 'رابط مساحة العمل', f_slug_help: 'تغييره يُبطل روابط الدعوة الحالية.', f_logo: 'الشعار', up_logo: 'رفع شعار', logo_help: 'PNG أو SVG مربع، ٢٥٦ بكسل على الأقل.',
+    f_plan: 'الباقة', plan_v: 'المؤسسات · ٣ وكلاء · ١٠ مقاعد', manage_plan: 'إدارة الباقة', f_cr: 'رقم السجل التجاري', f_vat: 'الرقم الضريبي',
+    f_ui_lang: 'لغة الواجهة الافتراضية', f_digits: 'الأرقام', dg_latn: 'غربية (123)', dg_arab: 'هندية (١٢٣)', f_cal: 'التقويم', cal_both: 'ميلادي + هجري', cal_greg: 'ميلادي فقط', cal_hijri: 'الهجري أولاً',
+    f_tz: 'المنطقة الزمنية', f_cur: 'عملة التقارير', f_cur_help: 'تُحوَّل صفقات الدرهم والجنيه في الإجماليات، ويبقى مبلغ كل صفقة بعملته.',
+    f_week: 'عطلة نهاية الأسبوع', wk_fs: 'الجمعة – السبت', wk_ss: 'السبت – الأحد', wk_f: 'الجمعة فقط',
+    preview: 'معاينة', pv_date: 'التاريخ', pv_num: 'رقم', pv_money: 'مبلغ',
+    hours_t: 'أوقات العمل', hours_d: 'تنتظر التحويلات خارج هذه الأوقات في القائمة، ويخبر الذكاء الاصطناعي العميل متى سيرد موظف.',
+    closed: 'مغلق', to: 'إلى', prayer_t: 'إيقاف المتابعات وقت الصلاة', prayer_d: 'حسب مدينة كل مشروع (مكة، الرياض، الخبر، دبي، بنها).',
+    ramadan_t: 'دوام رمضان', ramadan_d: 'التحويل تلقائياً إلى ٨ مساءً – ٢ فجراً خلال رمضان.',
+    ai_lang: 'لغة الرد الافتراضية', al_auto: 'حسب لغة العميل', al_sa: 'عربي · سعودي', al_eg: 'عربي · مصري', al_en: 'الإنجليزية',
+    ai_disclose: 'إخبار العميل أنه يتحدث مع ذكاء اصطناعي', ai_disclose_d: 'يضيف سطراً قصيراً في أول رد. يُنصح به.',
+    ai_fu: 'أقصى عدد للمتابعات قبل التوقف', ai_fu_d: 'بعد هذا العدد من المتابعات دون رد يتوقف الذكاء الاصطناعي ويحوّل لموظف.',
+    ai_quiet: 'ساعات الهدوء', ai_quiet_d: 'لا رسائل استباقية في هذه الفترة (بتوقيت العميل).',
+    ai_handoff: 'التحويل لموظف عندما…', h_ask: 'يطلب العميل التحدث مع شخص', h_pay: 'يكون العميل جاهزاً لدفع العربون أو التوقيع', h_neg: 'يكون العميل منزعجاً أو يشتكي', h_price: 'يفاوض العميل على سعر أقل من الحد الأدنى', h_vip: 'يحمل العميل وسم كبار العملاء',
+    ai_price: 'ذكر الأسعار دون البحث في المخزون', ai_price_d: 'عند الإيقاف تبقى قاعدة «ابحث في الوحدات قبل ذكر أي سعر».',
+    n_event: 'الحدث', n_app: 'داخل اللوحة', n_email: 'البريد', n_wa: 'واتساب',
+    ne_human: 'محادثة تحتاج موظف', ne_human_d: 'توقف الذكاء الاصطناعي أو طلب العميل شخصاً', ne_won: 'تم إغلاق صفقة بنجاح', ne_visit: 'تم حجز زيارة', ne_down: 'توقفت قناة عن العمل', ne_digest: 'ملخص يومي', ne_digest_d: 'يُرسل ٨ صباحاً بتوقيت مساحة العمل',
+    k_webhook: 'مفتاح ويبهوك المنشأة', k_webhook_d: 'tenant.settings.webhook_api_key، ترسله خدمة المراسلة مع كل رسالة واردة.',
+    k_ai: 'مفتاح رد الذكاء الاصطناعي', k_ai_d: 'يستخدمه الوكلاء لإرسال الردود إلى ‎/callbacks/ai/{tenant_id}.',
+    k_ext: 'رابط وكيل الذكاء الاصطناعي الافتراضي', k_ext_d: 'يُستخدم عندما لا يحدد الوكيل settings.external_endpoint.',
+    k_rotate: 'تجديد', k_reveal: 'إظهار', k_hide: 'إخفاء', k_copy: 'نسخ', copied: 'تم النسخ', rotated: 'تم تجديد المفتاح — حدّث خدمة المراسلة خلال ١٠ دقائق',
+    k_docs: 'توثيق الواجهات', k_last: 'آخر استخدام {t}',
+    p_ret: 'الاحتفاظ بالمحادثات لمدة', p_ret_d: 'تُحذف الرسائل الأقدم، وتبقى الصفقات والعملاء.', r_6: '٦ أشهر', r_12: '١٢ شهراً', r_24: '٢٤ شهراً', r_inf: 'دائماً',
+    p_consent: 'رسالة الموافقة', p_consent_d: 'تُرسل قبل أن يجمع الذكاء الاصطناعي بيانات شخصية في قناة جديدة.',
+    p_mask: 'إخفاء رقم الهوية والآيبان في المحادثات', p_mask_d: 'تُخفى عن الموظفين ولا تُرسل أبداً لنموذج الذكاء الاصطناعي.',
+    p_export: 'تصدير كل بيانات مساحة العمل', p_export_d: 'ملف ZIP بالعملاء والصفقات والرسائل يُرسل للمشرفين.', p_export_b: 'طلب التصدير', exp_toast: 'تم طلب التصدير — سيصل المشرفين بريد عند جاهزيته',
+    dz_suspend: 'إيقاف كل وكلاء الذكاء الاصطناعي', dz_suspend_d: 'تستمر القنوات في استقبال الرسائل لكن لا أحد يرد تلقائياً.', dz_suspend_b: 'إيقاف الذكاء الاصطناعي',
+    dz_delete: 'حذف مساحة العمل', dz_delete_d: 'يحذف نهائياً الوكلاء والقنوات والعملاء والصفقات والرسائل بعد ٣٠ يوماً.', dz_delete_b: 'حذف مساحة العمل',
+    cf_pause_t: 'إيقاف كل وكلاء الذكاء الاصطناعي؟', cf_pause_b: 'لن يتلقى العملاء ردوداً حتى تستأنف. ردود الموظفين تعمل كالمعتاد.', cf_pause_y: 'إيقاف',
+    cf_del_t: 'حذف الربى للتطوير العقاري؟', cf_del_b: 'سيُجدول الحذف بعد ٣٠ يوماً. اكتب رابط مساحة العمل للتأكيد.', cf_del_l: 'اكتب {s} للتأكيد', cf_del_y: 'حذف مساحة العمل',
+    paused: 'تم إيقاف كل الوكلاء', del_sched: 'جُدول الحذف في {d}',
+    days_sun: 'الأحد', days_mon: 'الاثنين', days_tue: 'الثلاثاء', days_wed: 'الأربعاء', days_thu: 'الخميس', days_fri: 'الجمعة', days_sat: 'السبت', open_l: 'مفتوح يوم {d}',
+    err_name: 'أدخل اسم المنشأة الذي سيراه العملاء.',
+  },
+});
+
+const SECTIONS = [['workspace', 'building-2'], ['locale', 'languages'], ['ai', 'sparkles'], ['notify', 'bell'], ['api', 'plug'], ['privacy', 'shield-check'], ['danger', 'triangle-alert']];
+const API = {
+  workspace: 'GET/PATCH /tenants/{id} {name, slug, plan} · admin only',
+  locale: 'tenant.settings.locale (convention, not read by backend)',
+  ai: 'tenant.settings.ai_defaults · agents read agent.settings only',
+  notify: 'NEW notifications service',
+  api: 'tenant.settings.webhook_api_key · settings.external_ai_base_url (env)',
+  privacy: 'NEW retention job + masking',
+  danger: 'PATCH /tenants/{id} {status: suspended} · DELETE /tenants/{id}',
+};
+const GAP = { workspace: false, locale: true, ai: true, notify: true, api: false, privacy: true, danger: false };
+const DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const DEFAULTS = {
+  wname: 'Al Ruba Developments', wname_ar: 'الربى للتطوير العقاري', slug: 'alruba', cr: '1010 123456', vat: '300 1234 5678 0003',
+  ui_lang: 'ar', digits: 'latn', cal: 'both', tz: 'Asia/Riyadh', cur: 'SAR', week: 'fs',
+  hours: { sun: [1, '09:00', '18:00'], mon: [1, '09:00', '18:00'], tue: [1, '09:00', '18:00'], wed: [1, '09:00', '18:00'], thu: [1, '09:00', '16:00'], fri: [0, '16:00', '22:00'], sat: [1, '16:00', '22:00'] },
+  prayer: true, ramadan: true,
+  ai_lang: 'auto', disclose: true, fu: 3, q_from: '23:00', q_to: '08:00', h_ask: true, h_pay: true, h_neg: true, h_price: false, h_vip: true, price: false,
+  n: { human: [1, 1, 1], won: [1, 1, 0], visit: [1, 0, 1], down: [1, 1, 0], digest: [0, 1, 0] },
+  ret: '24', consent: 'مرحباً! نحفظ بياناتك لخدمتك في شراء العقار وفق نظام حماية البيانات الشخصية. هل توافق على المتابعة؟ / Hi! We keep your details only to help with your property search, per data-protection law. OK to continue?', mask: true,
+};
+let saved = JSON.parse(JSON.stringify(DEFAULTS));
+let S = JSON.parse(JSON.stringify(DEFAULTS));
+let sec = new URLSearchParams(location.search).get('section') || 'workspace';
+if (!SECTIONS.some(([k]) => k === sec)) sec = 'workspace';
+
+const dirty = () => JSON.stringify(S) !== JSON.stringify(saved);
+const sw = (key, on, label) => `<label class="switch"><input type="checkbox" data-k="${key}" ${on ? 'checked' : ''}><span class="track"></span><span class="sr-only">${label}</span></label>`;
+const sel = (key, opts, val, id) => `<select class="select" ${id ? `id="${id}"` : ''} data-k="${key}">${opts.map(([v, l]) => `<option value="${v}" ${String(val) === String(v) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+const rowSet = (t, d, ctrl, extra = '') => `<div class="row-set" ${extra}><div class="grow"><div class="rs-t">${t}</div>${d ? `<div class="rs-d">${d}</div>` : ''}</div><div class="rs-c">${ctrl}</div></div>`;
+const card = (title, body, api) => `<section class="card ${api && api.includes('NEW') || (api && api.includes('convention')) ? 'gap' : ''}" ${api ? `data-api="${api}"` : ''}>${title ? `<div class="card-h"><h3>${title}</h3></div>` : ''}<div class="card-b">${body}</div></section>`;
+
+function renderNav() {
+  document.getElementById('subnav').innerHTML = SECTIONS.map(([k, i]) => `<a href="?section=${k}" data-sec="${k}" class="${k === 'danger' ? 'dz' : ''}" ${k === sec ? 'aria-current="true"' : ''}><i data-lucide="${i}"></i>${App.t('sec_' + k)}</a>`).join('');
+  document.querySelectorAll('[data-sec]').forEach((a) => a.onclick = (e) => { e.preventDefault(); sec = a.dataset.sec; try { history.replaceState(null, '', '?section=' + sec); } catch (err) { /* file:// blocks history edits */ } renderNav(); renderPanel(); App.icons(); document.getElementById('panel').querySelector('h2').focus(); });
+}
+
+function preview() {
+  const now = new Date(); const ar = App.lang === 'ar';
+  const loc = ar ? (S.digits === 'arab' ? 'ar-SA' : 'ar-SA-u-nu-latn') : 'en-US';
+  const d = S.cal === 'greg' ? new Intl.DateTimeFormat(loc, { dateStyle: 'medium' }).format(now)
+    : S.cal === 'hijri' ? new Intl.DateTimeFormat(loc + (loc.includes('-u-') ? '-ca-islamic-umalqura' : '-u-ca-islamic-umalqura'), { dateStyle: 'medium' }).format(now)
+    : `${new Intl.DateTimeFormat(loc, { day: 'numeric', month: 'short' }).format(now)} · ${new Intl.DateTimeFormat(loc + (loc.includes('-u-') ? '-ca-islamic-umalqura' : '-u-ca-islamic-umalqura'), { day: 'numeric', month: 'short' }).format(now)}`;
+  return `<div class="preview" id="preview" aria-live="polite"><div><div class="pl">${App.t('pv_date')}</div><div class="pv">${d}</div></div>
+    <div><div class="pl">${App.t('pv_num')}</div><div class="pv">${new Intl.NumberFormat(loc).format(1284750)}</div></div>
+    <div><div class="pl">${App.t('pv_money')}</div><div class="pv">${new Intl.NumberFormat(loc, { style: 'currency', currency: S.cur, maximumFractionDigits: 0 }).format(2450000)}</div></div></div>`;
+}
+
+function renderPanel() {
+  const p = document.getElementById('panel');
+  const head = `<header><h2 tabindex="-1">${App.t('sec_' + sec)}</h2><p>${App.t('d_' + sec)}</p></header>`;
+  let body = '';
+  if (sec === 'workspace') body = card('', `<div class="form-grid">
+      <div class="field full"><span style="font-size:12.5px;font-weight:500;color:var(--text-2)">${App.t('f_logo')}</span><div class="logo-up"><span class="logo-box">AR</span><div class="stack" style="gap:6px"><button class="btn sm" type="button"><i data-lucide="upload" class="ico-sm"></i>${App.t('up_logo')}</button><span class="help" style="font-size:12px;color:var(--muted)">${App.t('logo_help')}</span></div></div></div>
+      <div class="field" id="w-wname"><label for="fWname">${App.t('f_wname')}<span class="req" aria-hidden="true">*</span></label><input class="input" id="fWname" data-k="wname" value="${App.esc(S.wname)}" required aria-describedby="e-wname"><span class="help" id="e-wname" role="alert" style="color:var(--danger);display:none">${App.t('err_name')}</span></div>
+      <div class="field"><label for="fWnameAr">${App.t('f_wname_ar')}</label><input class="input" id="fWnameAr" dir="rtl" lang="ar" data-k="wname_ar" value="${App.esc(S.wname_ar)}"></div>
+      <div class="field"><label for="fSlug">${App.t('f_slug')}</label><div class="input-group ltr"><span class="addon">app.voom.cc/</span><input class="input" id="fSlug" data-k="slug" value="${App.esc(S.slug)}" aria-describedby="h-slug"></div><span class="help" id="h-slug">${App.t('f_slug_help')}</span></div>
+      <div class="field"><span style="font-size:12.5px;font-weight:500;color:var(--text-2)">${App.t('f_plan')}</span><div class="row" style="min-height:40px"><span class="badge gold"><i data-lucide="crown"></i>${App.t('plan_v')}</span><a class="btn sm ghost" href="#">${App.t('manage_plan')}</a></div></div>
+      <div class="field gap" data-api="NEW tenant.settings.cr_number"><label for="fCr">${App.t('f_cr')}</label><input class="input ltr" id="fCr" data-k="cr" value="${App.esc(S.cr)}" inputmode="numeric"></div>
+      <div class="field gap" data-api="NEW tenant.settings.vat_number"><label for="fVat">${App.t('f_vat')}</label><input class="input ltr" id="fVat" data-k="vat" value="${App.esc(S.vat)}" inputmode="numeric"></div>
+    </div>`, API.workspace);
+
+  if (sec === 'locale') body = card('', `<div class="form-grid">
+      <div class="field"><label for="lUi">${App.t('f_ui_lang')}</label>${sel('ui_lang', [['ar', 'العربية'], ['en', 'English']], S.ui_lang, 'lUi')}</div>
+      <div class="field"><label for="lTz">${App.t('f_tz')}</label>${sel('tz', [['Asia/Riyadh', 'Riyadh (GMT+3)'], ['Asia/Dubai', 'Dubai (GMT+4)'], ['Africa/Cairo', 'Cairo (GMT+2/+3)']], S.tz, 'lTz')}</div>
+      <div class="field"><label for="lDg">${App.t('f_digits')}</label>${sel('digits', [['latn', App.t('dg_latn')], ['arab', App.t('dg_arab')]], S.digits, 'lDg')}</div>
+      <div class="field"><label for="lCal">${App.t('f_cal')}</label>${sel('cal', [['both', App.t('cal_both')], ['greg', App.t('cal_greg')], ['hijri', App.t('cal_hijri')]], S.cal, 'lCal')}</div>
+      <div class="field"><label for="lCur">${App.t('f_cur')}</label>${sel('cur', [['SAR', 'SAR · ﷼'], ['AED', 'AED · د.إ'], ['EGP', 'EGP · ج.م'], ['USD', 'USD · $']], S.cur, 'lCur')}<span class="help">${App.t('f_cur_help')}</span></div>
+      <div class="field"><label for="lWk">${App.t('f_week')}</label>${sel('week', [['fs', App.t('wk_fs')], ['ss', App.t('wk_ss')], ['f', App.t('wk_f')]], S.week, 'lWk')}</div>
+      <div class="field full"><span style="font-size:12.5px;font-weight:500;color:var(--text-2)">${App.t('preview')}</span>${preview()}</div>
+    </div>`, API.locale) + card(App.t('hours_t'), `<p class="muted" style="font-size:12.5px;margin-bottom:var(--s3)">${App.t('hours_d')}</p><div class="hours">${DAYS.map((d) => { const [on, a, b] = S.hours[d]; return `<div class="day ${on ? '' : 'off'}">
+        <span style="font-weight:500">${App.t('days_' + d)}</span>
+        <label class="switch"><input type="checkbox" data-day="${d}" ${on ? 'checked' : ''}><span class="track"></span><span class="sr-only">${App.t('open_l').replace('{d}', App.t('days_' + d))}</span></label>
+        <div class="times">${on ? `<input class="input ltr" type="time" data-dt="${d}:1" value="${a}" aria-label="${App.t('days_' + d)} from"><span class="muted">${App.t('to')}</span><input class="input ltr" type="time" data-dt="${d}:2" value="${b}" aria-label="${App.t('days_' + d)} to">` : `<span class="closed">${App.t('closed')}</span>`}</div></div>`; }).join('')}</div>
+      <hr class="divider" style="margin:var(--s4) 0">
+      ${rowSet(App.t('prayer_t'), App.t('prayer_d'), sw('prayer', S.prayer, App.t('prayer_t')))}${rowSet(App.t('ramadan_t'), App.t('ramadan_d'), sw('ramadan', S.ramadan, App.t('ramadan_t')))}`, 'NEW tenant.settings.working_hours (used by handoff + follow-up scheduling)');
+
+  if (sec === 'ai') body = card('', `
+      ${rowSet(App.t('ai_lang'), '', `<label class="sr-only" for="aiL">${App.t('ai_lang')}</label>${sel('ai_lang', [['auto', App.t('al_auto')], ['ar-SA', App.t('al_sa')], ['ar-EG', App.t('al_eg')], ['en', App.t('al_en')]], S.ai_lang, 'aiL')}`)}
+      ${rowSet(App.t('ai_disclose'), App.t('ai_disclose_d'), sw('disclose', S.disclose, App.t('ai_disclose')))}
+      ${rowSet(App.t('ai_fu'), App.t('ai_fu_d'), `<div class="stepper"><button type="button" data-step="-1" aria-label="−"><i data-lucide="minus" class="ico-sm"></i></button><input class="num" id="fuIn" data-k="fu" value="${S.fu}" inputmode="numeric" aria-label="${App.t('ai_fu')}"><button type="button" data-step="1" aria-label="+"><i data-lucide="plus" class="ico-sm"></i></button></div>`)}
+      ${rowSet(App.t('ai_quiet'), App.t('ai_quiet_d'), `<input class="input ltr" type="time" data-k="q_from" value="${S.q_from}" style="width:120px" aria-label="${App.t('ai_quiet')} from"><span class="muted">${App.t('to')}</span><input class="input ltr" type="time" data-k="q_to" value="${S.q_to}" style="width:120px" aria-label="${App.t('ai_quiet')} to">`)}
+      ${rowSet(App.t('ai_price'), App.t('ai_price_d'), sw('price', S.price, App.t('ai_price')))}`, API.ai) +
+    card(App.t('ai_handoff'), `<div class="checks">${['ask', 'pay', 'neg', 'price', 'vip'].map((k) => `<label><input type="checkbox" data-k="h_${k}" ${S['h_' + k] ? 'checked' : ''}><span>${App.t('h_' + k)}</span></label>`).join('')}</div>`, 'transition_rules + NEW tenant.settings.handoff_triggers');
+
+  if (sec === 'notify') body = card('', `<div class="table-wrap"><table class="ntab"><thead><tr><th>${App.t('n_event')}</th><th>${App.t('n_app')}</th><th>${App.t('n_email')}</th><th>${App.t('n_wa')}</th></tr></thead><tbody>
+      ${[['human', 1], ['won'], ['visit'], ['down'], ['digest', 1]].map(([k, d]) => `<tr><td><div style="font-weight:500">${App.t('ne_' + k)}</div>${d ? `<div class="n-d">${App.t('ne_' + k + '_d')}</div>` : ''}</td>
+        ${[0, 1, 2].map((i) => `<td class="c"><label class="switch" style="justify-content:center"><input type="checkbox" data-n="${k}:${i}" ${S.n[k][i] ? 'checked' : ''}><span class="track"></span><span class="sr-only">${App.t('ne_' + k)} · ${App.t(['n_app', 'n_email', 'n_wa'][i])}</span></label></td>`).join('')}</tr>`).join('')}
+    </tbody></table></div>`, API.notify);
+
+  if (sec === 'api') {
+    const key = (id, label, desc, masked, full, extra, api, gap) => `<div class="field ${gap ? 'gap' : ''}" data-api="${api}"><span style="font-size:12.5px;font-weight:500;color:var(--text-2)">${label}</span>
+      <div class="copy-field"><code id="${id}" data-full="${full}" data-mask="${masked}">${masked}</code>
+        <button class="btn sm ghost" type="button" data-reveal="${id}">${App.t('k_reveal')}</button>
+        <button class="btn sm ghost" type="button" data-copyk="${id}"><i data-lucide="copy" class="ico-sm"></i>${App.t('k_copy')}</button>${extra}</div>
+      <span class="help">${desc}</span></div>`;
+    body = card('', `<div class="stack" style="gap:var(--s5)">
+      ${key('kWh', App.t('k_webhook'), `${App.t('k_webhook_d')} · ${App.t('k_last').replace('{t}', App.ago(2))}`, 'whk_live_••••••••••••••••3f9a', 'whk_live_8c1e0b77d2a94f6e9b153f9a', `<button class="btn sm ghost" type="button" data-rotate="kWh"><i data-lucide="refresh-cw" class="ico-sm"></i>${App.t('k_rotate')}</button>`, 'tenant.settings.webhook_api_key · NEW rotate endpoint', true)}
+      ${key('kAi', App.t('k_ai'), App.t('k_ai_d'), 'aik_live_••••••••••••••••71c0', 'aik_live_f3a09d2c55e14b0a8e2271c0', '', 'AiApiKeyGuard · settings.ai_api_key (env, not per tenant)', true)}
+      <div class="field gap" data-api="settings.external_ai_base_url (env) · agent.settings.external_endpoint"><label for="kExt">${App.t('k_ext')}</label><input class="input ltr" id="kExt" data-k="ext" value="${App.esc(S.ext || 'https://smaia.voom.cc/api/v1/process')}" type="url"><span class="help">${App.t('k_ext_d')}</span></div>
+      <a class="btn" href="#" style="align-self:flex-start"><i data-lucide="book-open-text"></i>${App.t('k_docs')}<i data-lucide="external-link" class="ico-sm"></i></a></div>`, '');
+  }
+
+  if (sec === 'privacy') body = card('', `
+      ${rowSet(App.t('p_ret'), App.t('p_ret_d'), `<label class="sr-only" for="pRet">${App.t('p_ret')}</label>${sel('ret', [['6', App.t('r_6')], ['12', App.t('r_12')], ['24', App.t('r_24')], ['inf', App.t('r_inf')]], S.ret, 'pRet')}`)}
+      ${rowSet(App.t('p_mask'), App.t('p_mask_d'), sw('mask', S.mask, App.t('p_mask')))}
+      <div class="row-set" style="flex-direction:column;align-items:stretch"><div><div class="rs-t"><label for="pCons">${App.t('p_consent')}</label></div><div class="rs-d">${App.t('p_consent_d')}</div></div><textarea class="textarea" id="pCons" data-k="consent" rows="3">${App.esc(S.consent)}</textarea></div>
+      ${rowSet(App.t('p_export'), App.t('p_export_d'), `<button class="btn" type="button" id="expBtn"><i data-lucide="download"></i>${App.t('p_export_b')}</button>`)}`, API.privacy);
+
+  if (sec === 'danger') body = `<section class="card dz-card" data-api="${API.danger}"><div class="card-b">
+      ${rowSet(App.t('dz_suspend'), App.t('dz_suspend_d'), `<button class="btn danger" type="button" id="pauseBtn"><i data-lucide="pause"></i>${App.t('dz_suspend_b')}</button>`)}
+      ${rowSet(App.t('dz_delete'), App.t('dz_delete_d'), `<button class="btn danger-solid" type="button" id="delBtn"><i data-lucide="trash-2"></i>${App.t('dz_delete_b')}</button>`)}
+    </div></section>`;
+
+  p.innerHTML = head + body;
+  const hdr = p.querySelector('section'); if (hdr && !hdr.dataset.api && API[sec]) hdr.dataset.api = API[sec];
+  wire();
+}
+
+function wire() {
+  const p = document.getElementById('panel');
+  p.querySelectorAll('[data-k]').forEach((el) => {
+    const ev = el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input';
+    el.addEventListener(ev, () => { S[el.dataset.k] = el.type === 'checkbox' ? el.checked : el.dataset.k === 'fu' ? Math.max(0, Math.min(10, +el.value || 0)) : el.value; if (['digits', 'cal', 'cur'].includes(el.dataset.k)) document.getElementById('preview').outerHTML = preview(); syncBar(); });
+  });
+  const wn = document.getElementById('fWname');
+  if (wn) wn.onblur = () => { const bad = !wn.value.trim(); document.getElementById('e-wname').style.display = bad ? 'block' : 'none'; wn.setAttribute('aria-invalid', bad); wn.style.borderColor = bad ? 'var(--danger)' : ''; };
+  p.querySelectorAll('[data-day]').forEach((cb) => cb.onchange = () => { S.hours[cb.dataset.day][0] = cb.checked ? 1 : 0; renderPanel(); App.icons(); syncBar(); });
+  p.querySelectorAll('[data-dt]').forEach((i) => i.oninput = () => { const [d, k] = i.dataset.dt.split(':'); S.hours[d][+k] = i.value; syncBar(); });
+  p.querySelectorAll('[data-n]').forEach((cb) => cb.onchange = () => { const [k, i] = cb.dataset.n.split(':'); S.n[k][+i] = cb.checked ? 1 : 0; syncBar(); });
+  p.querySelectorAll('[data-step]').forEach((b) => b.onclick = () => { S.fu = Math.max(0, Math.min(10, S.fu + +b.dataset.step)); document.getElementById('fuIn').value = S.fu; syncBar(); });
+  p.querySelectorAll('[data-reveal]').forEach((b) => b.onclick = () => { const c = document.getElementById(b.dataset.reveal); const show = c.textContent === c.dataset.mask; c.textContent = show ? c.dataset.full : c.dataset.mask; b.textContent = App.t(show ? 'k_hide' : 'k_reveal'); });
+  p.querySelectorAll('[data-copyk]').forEach((b) => b.onclick = () => { try { navigator.clipboard.writeText(document.getElementById(b.dataset.copyk).dataset.full); } catch (e) {} App.toast(App.t('copied')); });
+  p.querySelectorAll('[data-rotate]').forEach((b) => b.onclick = () => { const c = document.getElementById(b.dataset.rotate); const tail = Math.random().toString(16).slice(2, 6); c.dataset.full = 'whk_live_' + Math.random().toString(16).slice(2, 18) + tail; c.dataset.mask = 'whk_live_••••••••••••••••' + tail; c.textContent = c.dataset.mask; App.toast(App.t('rotated')); });
+  const ex = document.getElementById('expBtn'); if (ex) ex.onclick = () => App.toast(App.t('exp_toast'));
+  const pz = document.getElementById('pauseBtn'); if (pz) pz.onclick = () => ask('cf_pause_t', 'cf_pause_b', 'cf_pause_y', null, () => App.toast(App.t('paused')));
+  const dl = document.getElementById('delBtn'); if (dl) dl.onclick = () => ask('cf_del_t', 'cf_del_b', 'cf_del_y', saved.slug, () => App.toast(App.t('del_sched').replace('{d}', `${App.date(new Date(Date.now() + 30 * 864e5), { day: 'numeric', month: 'long', year: 'numeric' })} · ${App.hijri(new Date(Date.now() + 30 * 864e5))}`)));
+}
+
+function ask(t, b, y, typed, onYes) {
+  const m = document.getElementById('confirm');
+  document.getElementById('cfT').textContent = App.t(t); document.getElementById('cfB').textContent = App.t(b);
+  document.getElementById('cfNo').textContent = App.t('cancel'); document.getElementById('cfYes').textContent = App.t(y);
+  const f = document.getElementById('cfField'), inp = document.getElementById('cfIn'), yes = document.getElementById('cfYes');
+  f.style.display = typed ? '' : 'none'; inp.value = ''; yes.disabled = !!typed;
+  if (typed) { document.getElementById('cfL').textContent = App.t('cf_del_l').replace('{s}', typed); inp.oninput = () => { yes.disabled = inp.value.trim() !== typed; }; }
+  document.getElementById('scrim').classList.add('open'); m.classList.add('open'); App.icons();
+  (typed ? inp : document.getElementById('cfNo')).focus();
+  const close = () => { m.classList.remove('open'); document.getElementById('scrim').classList.remove('open'); };
+  document.getElementById('cfNo').onclick = close; yes.onclick = () => { close(); onYes(); };
+  document.getElementById('scrim').onclick = close;
+}
+document.addEventListener('app:escape', () => { document.getElementById('confirm').classList.remove('open'); document.getElementById('scrim').classList.remove('open'); });
+
+function syncBar() { document.getElementById('savebar').classList.toggle('show', dirty()); }
+document.getElementById('saveBtn').onclick = () => {
+  if (!S.wname.trim()) { sec = 'workspace'; renderNav(); renderPanel(); App.icons(); const w = document.getElementById('fWname'); w.dispatchEvent(new Event('blur')); w.focus(); return; }
+  saved = JSON.parse(JSON.stringify(S)); syncBar(); App.toast(App.t('saved'));
+};
+document.getElementById('discardBtn').onclick = () => { S = JSON.parse(JSON.stringify(saved)); renderPanel(); App.icons(); syncBar(); App.toast(App.t('discarded')); };
+window.addEventListener('beforeunload', (e) => { if (dirty()) { e.preventDefault(); e.returnValue = App.t('leave_warn'); } });
+
+App.onRender(() => { renderNav(); renderPanel(); syncBar(); });
+App.init('settings');
+</script>
+</body>
+</html>
